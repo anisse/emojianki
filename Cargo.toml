@@ -7,7 +7,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-genanki-rs-rev = { git = "https://github.com/viniciusdutra314/genanki-wasm", rev = "88051bfa9c1d7f93f1f060ead82b86dc92f27b2a" }
+genanki-rs-rev = { git = "https://github.com/viniciusdutra314/genanki-wasm", rev = "949613c19e5efd7227820d0d0f11e2a602fe5e19" }
 log = { version = "0.4", features = ["std"] }
 wasm-bindgen = "0.2.126"
 

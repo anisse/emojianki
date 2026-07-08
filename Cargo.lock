@@ -239,7 +239,7 @@ dependencies = [
 [[package]]
 name = "genanki-rs-rev"
 version = "0.3.0"
-source = "git+https://github.com/viniciusdutra314/genanki-wasm?rev=88051bfa9c1d7f93f1f060ead82b86dc92f27b2a#88051bfa9c1d7f93f1f060ead82b86dc92f27b2a"
+source = "git+https://github.com/viniciusdutra314/genanki-wasm?rev=949613c19e5efd7227820d0d0f11e2a602fe5e19#949613c19e5efd7227820d0d0f11e2a602fe5e19"
 dependencies = [
  "anyhow",
  "blake3",
@@ -268,12 +268,6 @@ name = "hashbrown"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
-
-[[package]]
-name = "heck"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "hex"
@@ -413,24 +407,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pulldown-cmark"
-version = "0.12.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f86ba2052aebccc42cbbb3ed234b8b13ce76f75c3551a303cb2bcffcff12bb14"
-dependencies = [
- "bitflags",
- "memchr",
- "pulldown-cmark-escape",
- "unicase",
-]
-
-[[package]]
-name = "pulldown-cmark-escape"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "007d8adb5ddab6f8e3f491ac63566a7d5002cc7ed73901f72057943fa71ae1ae"
-
-[[package]]
 name = "quote"
 version = "1.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -449,21 +425,6 @@ dependencies = [
  "beef",
  "fnv",
  "logos",
- "pulldown-cmark",
- "ramhorns-derive",
-]
-
-[[package]]
-name = "ramhorns-derive"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c55c1eb278808d0120a6dd2109f39a8da8fd279fc9bfcd5511e9b13e41dfcae9"
-dependencies = [
- "fnv",
- "heck",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -628,12 +589,6 @@ name = "typed-path"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e28f89b80c87b8fb0cf04ab448d5dd0dd0ade2f8891bae878de66a75a28600e"
-
-[[package]]
-name = "unicase"
-version = "2.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbc4bc3a9f746d862c45cb89d705aa10f187bb96c76001afab07a0d35ce60142"
 
 [[package]]
 name = "unicode-ident"

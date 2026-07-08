@@ -13,9 +13,29 @@
   </head>
   <body>
     <script type="module">
-      import init from "./emojianki.js";
-      var emojianki = await init();
-      emojianki.generate_set();
+      import init, { generate_set }from "./emojianki.js";
+      await init();
+      const out = generate_set();
+      const downloadURL = (data, fileName) => {
+        const a = document.createElement('a')
+        a.href = data
+        a.download = fileName
+        document.body.appendChild(a)
+        a.style.display = 'none'
+        a.click()
+        a.remove()
+      }
+
+      const downloadBlob = (data, fileName, mimeType) => {
+        const blob = new Blob([data], {
+          type: mimeType
+        })
+        const url = window.URL.createObjectURL(blob)
+        downloadURL(url, fileName)
+        setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+      }
+
+    downloadBlob(out, 'test.apkg', 'application/octet-stream');
     </script>
   </body>
 </html>

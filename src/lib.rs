@@ -4,7 +4,7 @@ use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
-pub fn generate_set() {
+pub fn generate_set() -> Vec<u8> {
     info!("Hello, world!");
 
     let mut deck = Deck::new(1234, "Example Deck", "Example Deck containing 2 Flashcards");
@@ -24,23 +24,10 @@ pub fn generate_set() {
     );
 
     let package = Package::new(vec![deck], std::collections::HashMap::new()).unwrap();
-    package.write(NullWriter {}).unwrap();
-}
-
-struct NullWriter {}
-impl std::io::Write for NullWriter {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-}
-impl std::io::Seek for NullWriter {
-    fn seek(&mut self, _: std::io::SeekFrom) -> std::io::Result<u64> {
-        Ok(0)
-    }
+    let mut out = vec![];
+    package.write(&mut out).unwrap();
+    info!("out ({}): {out:?}", out.len());
+    out
 }
 
 #[wasm_bindgen(start)]
