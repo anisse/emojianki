@@ -1,4 +1,6 @@
 mod labels;
+#[cfg(test)]
+mod test;
 
 use genanki_rs_rev::{Deck, Error, Note, Package, basic_model};
 use log::info;
