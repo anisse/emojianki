@@ -15,7 +15,6 @@
     <script type="module">
       import init, { generate_set }from "./emojianki.js";
       await init();
-      const out = generate_set();
       const downloadURL = (data, fileName) => {
         const a = document.createElement('a')
         a.href = data
@@ -35,8 +34,12 @@
         setTimeout(() => window.URL.revokeObjectURL(url), 1000)
       }
 
-    downloadBlob(out, 'test.apkg', 'application/octet-stream');
+    document.getElementById("dl").addEventListener("click", (_e) => {
+      const out = generate_set();
+      downloadBlob(out, 'test.apkg', 'application/octet-stream');
+    });
     </script>
+    <a href="#" id="dl">Download</a>
   </body>
 </html>
 
