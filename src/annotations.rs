@@ -1,22 +1,18 @@
 use std::collections::HashMap;
 
-use log::info;
+//use log::info;
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 
 #[derive(Default, Debug)]
 pub(crate) struct Annotation {
-    tts: String,
-    notes: Vec<String>,
+    pub(crate) tts: String,
+    pub(crate) notes: Vec<String>,
 }
-#[derive(Debug)]
-pub(crate) struct Annotations {
-    annotations: HashMap<String, Annotation>,
-}
+type Annotations = HashMap<String, Annotation>;
+
 pub(crate) fn parse_annotations(s: &str) -> Annotations {
-    let mut annots = Annotations {
-        annotations: HashMap::new(),
-    };
+    let mut annots = Annotations::new();
     let mut reader = Reader::from_str(s);
     reader.config_mut().trim_text(true);
 
@@ -69,14 +65,9 @@ pub(crate) fn parse_annotations(s: &str) -> Annotations {
             Ok(Event::Text(e)) => {
                 let text = e.decode().unwrap().into_owned();
                 if annot_tts.is_some() {
-                    annots
-                        .annotations
-                        .entry(annot_tts.take().unwrap())
-                        .or_default()
-                        .tts = text;
+                    annots.entry(annot_tts.take().unwrap()).or_default().tts = text;
                 } else if annot.is_some() {
                     annots
-                        .annotations
                         .entry(annot.take().unwrap())
                         .or_default()
                         .notes
