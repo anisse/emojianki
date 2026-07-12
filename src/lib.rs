@@ -1,3 +1,5 @@
+mod labels;
+
 use genanki_rs_rev::{Deck, Error, Note, Package, basic_model};
 use log::info;
 use wasm_bindgen::JsValue;
@@ -6,6 +8,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[wasm_bindgen]
 pub fn generate_set() -> Vec<u8> {
     info!("Hello, world!");
+    labels::get_labels();
 
     let mut deck = Deck::new(1234, "Example Deck", "Example Deck containing 2 Flashcards");
     deck.add_note(
