@@ -1,4 +1,5 @@
 mod annotations;
+mod charlabels;
 mod labels;
 #[cfg(test)]
 mod test;
