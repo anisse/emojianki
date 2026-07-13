@@ -13,7 +13,7 @@ pub fn generate_set() -> Vec<u8> {
     info!("Hello, world!");
     let labels = labels::get_labels();
     let annotations = annotations::parse_annotations(include_str!(
-        "../../unicode/cldr-release-48-2/common/annotations/fr.xml"
+        "../../unicode/cldr-release-48-2/common/annotationsDerived/fr.xml"
     ));
     // Let's start with the flags
 
