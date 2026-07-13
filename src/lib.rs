@@ -3,6 +3,7 @@ mod charlabels;
 mod labels;
 #[cfg(test)]
 mod test;
+mod xml;
 
 use annotations::{Annotations, parse_annotations};
 use genanki_rs_rev::{Deck, Note, Package, basic_model};
@@ -106,7 +107,7 @@ mod tests {
     #[test]
     fn test_labels() {
         crate::test::setup();
-        let ea = new();
+        let ea = new_emojianki();
         ea.generate_set("fr");
     }
 }
