@@ -13,8 +13,9 @@
   </head>
   <body>
     <script type="module">
-      import init, { generate_set }from "./emojianki.js";
+      import init, { new_emojianki } from "./emojianki.js";
       await init();
+      const ea = new_emojianki();
       const downloadURL = (data, fileName) => {
         const a = document.createElement('a')
         a.href = data
@@ -35,7 +36,7 @@
       }
 
     document.getElementById("dl").addEventListener("click", (_e) => {
-      const out = generate_set();
+      const out = ea.generate_set("fr");
       downloadBlob(out, 'emojis.apkg', 'application/octet-stream');
     });
     </script>

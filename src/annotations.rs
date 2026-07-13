@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use log::{debug, trace};
+use log::trace;
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 
@@ -9,7 +9,7 @@ pub(crate) struct Annotation {
     pub(crate) tts: String,
     pub(crate) notes: Vec<String>,
 }
-type Annotations = HashMap<String, Annotation>;
+pub(crate) type Annotations = HashMap<String, Annotation>;
 
 pub(crate) fn parse_annotations(s: &str) -> Annotations {
     let mut annots = Annotations::new();
