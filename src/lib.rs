@@ -1,6 +1,7 @@
 mod annotations;
 mod charlabels;
 mod labels;
+mod languages;
 #[cfg(test)]
 mod test;
 mod xml;
