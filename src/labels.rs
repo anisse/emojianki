@@ -10,7 +10,7 @@ pub(crate) struct Labels {
 }
 
 pub(crate) fn get_labels() -> Labels {
-    let file_content = include_str!("../../unicode/cldr-release-48-2/common/properties/labels.txt");
+    let file_content = include_str!("../cldr/common/properties/labels.txt");
     let mut labels = Labels {
         categories: HashMap::new(),
         emojis: HashMap::new(),

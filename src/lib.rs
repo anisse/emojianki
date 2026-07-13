@@ -50,9 +50,7 @@ impl EmojiAnki {
 
     #[wasm_bindgen]
     pub fn generate_set(&self, locale: &str) -> Vec<u8> {
-        let annotations = parse_annotations(include_str!(
-            "../../unicode/cldr-release-48-2/common/annotations/fr.xml"
-        ));
+        let annotations = parse_annotations(include_str!("../cldr/common/annotations/fr.xml"));
 
         // Let's start with the flags
         let mut deck = Deck::new(

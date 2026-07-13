@@ -50,8 +50,6 @@ mod tests {
     #[test]
     fn test_labels() {
         crate::test::setup();
-        parse_annotations(include_str!(
-            "../../unicode/cldr-release-48-2/common/annotations/fr.xml"
-        ));
+        parse_annotations(include_str!("../cldr/common/annotations/fr.xml"));
     }
 }
