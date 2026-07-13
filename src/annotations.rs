@@ -48,7 +48,7 @@ pub(crate) fn parse_annotations(s: &str) -> Annotations {
 mod tests {
     use super::*;
     #[test]
-    fn test_labels() {
+    fn test_annotations() {
         crate::test::setup();
         parse_annotations(include_str!("../cldr/common/annotations/fr.xml"));
     }

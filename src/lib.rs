@@ -151,10 +151,11 @@ pub(crate) fn web_main() -> Result<(), JsValue> {
 mod tests {
     use super::*;
     #[test]
-    fn test_labels() {
+    fn test_fr_gen() {
         crate::test::setup();
         let ea = new_emojianki();
         ea.generate_set(
+            "Test name".to_string(),
             include_str!("../cldr/common/annotations/fr.xml").as_bytes(),
             include_str!("../cldr/common/annotationsDerived/fr.xml").as_bytes(),
             vec!["Flags".to_string()],
