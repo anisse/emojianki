@@ -275,7 +275,7 @@ dependencies = [
 [[package]]
 name = "genanki-rs-rev"
 version = "0.3.0"
-source = "git+https://github.com/viniciusdutra314/genanki-wasm?rev=949613c19e5efd7227820d0d0f11e2a602fe5e19#949613c19e5efd7227820d0d0f11e2a602fe5e19"
+source = "git+https://github.com/viniciusdutra314/genanki-wasm?rev=bf42192aa0dd33ae011799bb1542391ffb6b3702#bf42192aa0dd33ae011799bb1542391ffb6b3702"
 dependencies = [
  "anyhow",
  "blake3",
