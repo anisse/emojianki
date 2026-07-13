@@ -7,16 +7,14 @@
     <style type="text/css">
       body {
           margin: 0;
-          overflow: hidden;
       }
     </style>
   </head>
   <body>
     <script type="module">
       import init, { new_emojianki } from "./emojianki.js";
-      await init();
-      const ea = new_emojianki();
-      const downloadURL = (data, fileName) => {
+
+      function downloadURL(data, fileName) {
         const a = document.createElement('a')
         a.href = data
         a.download = fileName
@@ -26,7 +24,7 @@
         a.remove()
       }
 
-      const downloadBlob = (data, fileName, mimeType) => {
+      function downloadBlob(data, fileName, mimeType) {
         const blob = new Blob([data], {
           type: mimeType
         })
@@ -35,12 +33,86 @@
         setTimeout(() => window.URL.revokeObjectURL(url), 1000)
       }
 
-    document.getElementById("dl").addEventListener("click", (_e) => {
-      const out = ea.generate_set("fr");
-      downloadBlob(out, 'emojis.apkg', 'application/octet-stream');
-    });
+      function getLanguage(locales) {
+          const langList = navigator.languages || ["en"];
+          return langList
+                .map((l) => l.replace("-", "_"))
+                .filter((l) => locales.includes(l))[0] ||
+                langList
+                .map((l) => l.split("-")[0])
+                .filter((l) => locales.includes(l))[0] ||
+                "en";
+      }
+      async function getData(url) {
+          try {
+              const response = await fetch(url);
+              if (!response.ok) {
+                  throw new Error(`Response status: ${response.status}`);
+              }
+
+              const bytes = await response.bytes();
+              return bytes;
+          } catch (error) {
+              console.error(error.message);
+          }
+      }
+      async function downloadDeck(ea, langSelect, catSelect) {
+        const annot = await getData("cldr/annotations/" + langSelect.value + ".xml");
+        const annotDerived = await getData("cldr/annotationsDerived/" + langSelect.value + ".xml");
+        const opts = Array.from(catSelect.selectedOptions);
+        const name = "EmojiAnki: " + langSelect.selectedOptions[0].innerText + " - " + opts.map((o) => o.innerText).join(", ");
+        var filename = "EmojiAnki_" + langSelect.selectedOptions[0].innerText.replaceAll(" ", "-");
+        if (opts.length == 1) {
+          filename += "_" +  opts[0].innerText.replaceAll(" ", "-");
+        }
+        filename += ".apkg";
+        const out = ea.generate_set(name, annot, annotDerived,
+                opts.map((o) => o.value));
+        downloadBlob(out, filename, 'application/octet-stream');
+      }
+
+      async function run () {
+        const ea = new_emojianki();
+        const locales = ea.locales();
+        const locale = getLanguage(locales);
+        const main = await getData("cldr/main/" + locale + ".xml");
+        const languages = ea.languages(main);
+        const categories = ea.categories(main);
+        console.log(categories);
+        const langSelect = document.getElementById("lang");
+        languages
+          .map((l) => [l.name, l.locale_name])
+          .sort(([,a],[,b]) => a.toLowerCase().localeCompare(b.toLowerCase()))
+          .forEach(([key, text]) => {
+              var option = document.createElement("option");
+              option.text = text;
+              option.value = key;
+              langSelect.add(option);
+          })
+        const catSelect = document.getElementById("cat");
+        categories
+          .map((l) => [l.name, l.locale_name])
+          .sort(([,a],[,b]) => a.toLowerCase().localeCompare(b.toLowerCase()))
+          .forEach(([key, text]) => {
+              var option = document.createElement("option");
+              option.text = text;
+              option.value = key;
+              catSelect.add(option);
+          })
+        document.getElementById("dl").addEventListener("click", (_e) => downloadDeck(ea, langSelect, catSelect));
+      }
+      await init();
+      await run();
     </script>
-    <a href="#" id="dl">Download</a>
+    <h1>Emoji Anki</h1>
+    <p>Learn languages, flags, or simply emoji names, with Anki.</p>
+    <label for="lang">Pick a language</label>
+    <select id="lang" name="languages" size="16">
+    </select>
+    <label for="cat">Pick an emoji category</label>
+    <select id="cat" name="categories" size="8" multiple>
+    </select>
+    <button type="button" id="dl">Download Anki Deck</button>
   </body>
 </html>
 

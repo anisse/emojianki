@@ -7,10 +7,16 @@ mod languages;
 mod test;
 mod xml;
 
-use annotations::{Annotations, parse_annotations};
-use genanki_rs_rev::{Deck, Note, Package, basic_model};
+use std::collections::HashSet;
+
+use annotations::parse_annotations;
+use available::LANGUAGES;
+use charlabels::parse_charlabels;
 use labels::{Labels, get_labels};
-use log::{debug, trace};
+use languages::parse_languages;
+
+use genanki_rs_rev::{Deck, Note, Package, basic_model};
+use log::{debug, info, trace};
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -28,21 +34,51 @@ pub fn new_emojianki() -> EmojiAnki {
 
 #[wasm_bindgen(getter_with_clone)]
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
-pub struct Category {
+pub struct Pair {
     pub name: String,
     pub locale_name: String,
 }
 
 #[wasm_bindgen]
 impl EmojiAnki {
-    pub fn list_categories(&self, locale: &str) -> Vec<Category> {
+    #[wasm_bindgen]
+    pub fn locales(&self) -> Vec<String> {
+        LANGUAGES.iter().map(|s| s.to_string()).collect()
+    }
+    #[wasm_bindgen]
+    pub fn languages(&self, main: &[u8]) -> Vec<Pair> {
+        let supported = available::LANGUAGES
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<HashSet<_>>();
+        let mut languages = parse_languages(unsafe { str::from_utf8_unchecked(main) })
+            .into_iter()
+            .filter(|(k, _)| supported.contains(k))
+            .map(|(k, v)| Pair {
+                name: k,
+                locale_name: v,
+            })
+            .collect::<Vec<_>>();
+        languages.sort();
+        languages
+    }
+    #[wasm_bindgen]
+    pub fn categories(&self, main: &[u8]) -> Vec<Pair> {
+        let s = unsafe { str::from_utf8_unchecked(main) };
+        let clabels = parse_charlabels(s);
+        info!("{:?}", self.labels.categories);
         let mut categories = self
             .labels
             .categories
             .keys()
-            .map(|k| Category {
+            .inspect(|k| {
+                let r = k.to_ascii_lowercase().replace("&", "_").replace(" ", "");
+                info!("{r} = {:?}", clabels.get(&r));
+            })
+            .map(|k| Pair {
                 name: k.clone(),
-                locale_name: String::new(),
+                locale_name: clabels[&k.to_ascii_lowercase().replace("&", "_").replace(" ", "")]
+                    .clone(),
             })
             .collect::<Vec<_>>();
         categories.sort();
@@ -50,38 +86,48 @@ impl EmojiAnki {
     }
 
     #[wasm_bindgen]
-    pub fn generate_set(&self, locale: &str) -> Vec<u8> {
-        let annotations = parse_annotations(include_str!("../cldr/common/annotations/fr.xml"));
+    pub fn generate_set(
+        &self,
+        name: String,
+        annot: &[u8],
+        annot_derived: &[u8],
+        categories: Vec<String>,
+    ) -> Vec<u8> {
+        let annot_s = unsafe { str::from_utf8_unchecked(annot) };
+        let annot_derived_s = unsafe { str::from_utf8_unchecked(annot_derived) };
+        let mut annotations = parse_annotations(annot_s);
+        annotations.extend(parse_annotations(annot_derived_s));
 
-        // Let's start with the flags
         let mut deck = Deck::new(
             20260717,
-            "Drapeaux Emoji",
-            "Apprendre les drapeaux avec les emojis",
+            &name,
+            "EmojiAnki: https://anisse.github.io/emojianki",
         );
-        for emoji in self.labels.categories["Flags"].iter() {
-            if let Some(annot) = annotations.get(emoji) {
-                deck.add_note(
-                    Note::new(
-                        basic_model(),
-                        vec![
-                            &format!(
-                                "<div style=\"\
+        for category in categories.into_iter() {
+            for emoji in self.labels.categories[&category].iter() {
+                if let Some(annot) = annotations.get(emoji) {
+                    deck.add_note(
+                        Note::new(
+                            basic_model(),
+                            vec![
+                                &format!(
+                                    "<div style=\"\
                                 font-size: 90px; \
                                 text-shadow: 0 0 45px white; \
                             \">{emoji}</div>"
-                            ),
-                            &annot.tts,
-                        ],
-                    )
-                    .expect("Cannot create new note"),
-                );
-                debug!("Emoji {emoji} TTS is {}", annot.tts);
-            } else {
-                debug!(
-                    "Emoji {{{emoji}}} {:x?} has no annotation",
-                    emoji.chars().map(|c| c as u32).collect::<Vec<_>>(),
-                );
+                                ),
+                                &annot.tts,
+                            ],
+                        )
+                        .expect("Cannot create new note"),
+                    );
+                    debug!("Emoji {emoji} TTS is {}", annot.tts);
+                } else {
+                    debug!(
+                        "Emoji {{{emoji}}} {:x?} has no annotation",
+                        emoji.chars().map(|c| c as u32).collect::<Vec<_>>(),
+                    );
+                }
             }
         }
 
@@ -108,6 +154,10 @@ mod tests {
     fn test_labels() {
         crate::test::setup();
         let ea = new_emojianki();
-        ea.generate_set("fr");
+        ea.generate_set(
+            include_str!("../cldr/common/annotations/fr.xml").as_bytes(),
+            include_str!("../cldr/common/annotationsDerived/fr.xml").as_bytes(),
+            vec!["Flags".to_string()],
+        );
     }
 }
