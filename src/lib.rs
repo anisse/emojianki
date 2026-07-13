@@ -16,7 +16,7 @@ use labels::{Labels, get_labels};
 use languages::parse_languages;
 
 use genanki_rs_rev::{Deck, Note, Package, basic_model};
-use log::{debug, info, trace};
+use log::{debug, trace};
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -66,14 +66,14 @@ impl EmojiAnki {
     pub fn categories(&self, main: &[u8]) -> Vec<Pair> {
         let s = unsafe { str::from_utf8_unchecked(main) };
         let clabels = parse_charlabels(s);
-        info!("{:?}", self.labels.categories);
+        debug!("{:?}", self.labels.categories);
         let mut categories = self
             .labels
             .categories
             .keys()
             .inspect(|k| {
                 let r = k.to_ascii_lowercase().replace("&", "_").replace(" ", "");
-                info!("{r} = {:?}", clabels.get(&r));
+                debug!("{r} = {:?}", clabels.get(&r));
             })
             .map(|k| Pair {
                 name: k.clone(),
