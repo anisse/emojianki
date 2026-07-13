@@ -14,8 +14,8 @@ pub fn generate_set() -> Vec<u8> {
     let annotations = annotations::parse_annotations(include_str!(
         "../../unicode/cldr-release-48-2/common/annotationsDerived/fr.xml"
     ));
-    // Let's start with the flags
 
+    // Let's start with the flags
     let mut deck = Deck::new(
         20260717,
         "Drapeaux Emoji",
@@ -38,8 +38,12 @@ pub fn generate_set() -> Vec<u8> {
                 )
                 .expect("Cannot create new note"),
             );
+            debug!("Emoji {emoji} TTS is {}", annot.tts);
         } else {
-            debug!("Emoji {emoji} has no annotation in french");
+            debug!(
+                "Emoji {{{emoji}}} {:x?} has no annotation",
+                emoji.chars().map(|c| c as u32).collect::<Vec<_>>(),
+            );
         }
     }
 

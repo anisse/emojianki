@@ -24,13 +24,21 @@ pub(crate) fn get_labels() -> Labels {
             unicodeset_parse::parse(parts[0]).expect("Built-in data string should always parse");
         // Way too many allocs!
         let mut insert = |em: &str, cat: &str| {
+            let emoji_no_variant_normalized = em
+                .chars()
+                .filter(|c| *c as u32 != 0xfe0f) // This character is a variant selector (color
+                // emoji vs text) and is not removed by classic
+                // unicode normalization
+                .collect::<String>();
             labels
                 .categories
                 .entry(cat.to_string())
                 .or_default()
-                .push(em.to_string());
+                .push(emoji_no_variant_normalized.clone());
             // excessive alloc, should point to an enum / ID
-            labels.emojis.insert(em.to_string(), cat.to_string());
+            labels
+                .emojis
+                .insert(emoji_no_variant_normalized, cat.to_string());
         };
         if set.has_strings() {
             for s in set.strings().iter() {
