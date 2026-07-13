@@ -88,7 +88,7 @@ pub(crate) fn parse_annotations(s: &str) -> Annotations {
             _ => (),
         }
     }
-    debug!("Annotations: {annots:?}");
+    trace!("Annotations: {annots:?}");
     annots
 }
 

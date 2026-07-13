@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use icu_experimental::unicodeset_parse;
-use log::debug;
+use log::trace;
 
 #[derive(Debug)]
 pub(crate) struct Labels {
@@ -41,7 +41,7 @@ pub(crate) fn get_labels() -> Labels {
             insert(&format!("{}", cp), parts[1]); // excessive alloc
         }
     }
-    debug!("labels: {labels:?}");
+    trace!("labels: {labels:?}");
     labels
 }
 
