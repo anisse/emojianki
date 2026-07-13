@@ -12,10 +12,16 @@ pub(crate) fn parse_languages(s: &str) -> Languages {
         &["ldml", "localeDisplayNames", "languages", "language"],
         |e| match e {
             ParseEvent::Start(mut attrs) => {
-                typ = Some(attrs.remove("type").expect("type should be present"))
+                if !attrs.contains_key("alt") {
+                    // Ignore alts and take main option
+                    typ = Some(attrs.remove("type").expect("type should be present"))
+                }
             }
             ParseEvent::Text(text) => {
-                if let Some(label_type) = typ.take() {
+                if let Some(label_type) = typ.take()
+                // ignore continuations
+                    && text != "↑↑↑"
+                {
                     langs.insert(label_type, text);
                 }
             }
