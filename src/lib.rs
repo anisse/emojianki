@@ -24,7 +24,21 @@ pub fn generate_set() -> Vec<u8> {
     );
     for emoji in labels.categories["Flags"].iter() {
         if let Some(annot) = annotations.get(emoji) {
-            deck.add_note(Note::new(basic_model(), vec![emoji, &annot.tts]).unwrap());
+            deck.add_note(
+                Note::new(
+                    basic_model(),
+                    vec![
+                        &format!(
+                            "<div style=\"\
+                                font-size: 90px; \
+                                text-shadow: 0 0 45px white; \
+                            \">{emoji}</div>"
+                        ),
+                        &annot.tts,
+                    ],
+                )
+                .unwrap(),
+            );
         } else {
             info!("Emoji {emoji} has no annotation in french");
         }
