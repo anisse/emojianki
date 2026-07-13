@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-//use log::info;
+use log::{debug, trace};
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 
@@ -38,7 +38,7 @@ pub(crate) fn parse_annotations(s: &str) -> Annotations {
                     .expect("utf-8 tag name")
                     .to_string(); // alloc gallore
                 path.push(tag_name);
-                //info!("Tag path: {path:?}");
+                trace!("Tag path: {path:?}");
                 if path == ["ldml", "annotations", "annotation"] {
                     let mut attrs = e
                         .attributes()
@@ -54,10 +54,10 @@ pub(crate) fn parse_annotations(s: &str) -> Annotations {
                     if let Some(typ) = attrs.get("type")
                         && typ == "tts"
                     {
-                        //println!("cp {} is tts", cp);
+                        trace!("cp {} is tts", cp);
                         annot_tts = Some(cp);
                     } else {
-                        //println!("attributes: {attrs:?}",);
+                        trace!("attributes: {attrs:?}",);
                         annot = Some(cp);
                     }
                 }
@@ -79,7 +79,7 @@ pub(crate) fn parse_annotations(s: &str) -> Annotations {
             _ => (),
         }
     }
-    //info!("{annots:?}");
+    debug!("Annotations: {annots:?}");
     annots
 }
 

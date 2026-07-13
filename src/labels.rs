@@ -1,7 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use icu_experimental::unicodeset_parse;
-use log::info;
+use log::debug;
 
 #[derive(Debug)]
 pub(crate) struct Labels {
@@ -29,11 +29,6 @@ pub(crate) fn get_labels() -> Labels {
                 .entry(cat.to_string())
                 .or_default()
                 .push(em.to_string());
-            /*
-            if !labels.categories.contains(cat) {
-                labels.categories.insert(cat.to_string());
-            }
-            */
             // excessive alloc, should point to an enum / ID
             labels.emojis.insert(em.to_string(), cat.to_string());
         };
@@ -46,7 +41,7 @@ pub(crate) fn get_labels() -> Labels {
             insert(&format!("{}", cp), parts[1]); // excessive alloc
         }
     }
-    info!("{labels:?}");
+    debug!("labels: {labels:?}");
     labels
 }
 

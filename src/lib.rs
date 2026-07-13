@@ -3,14 +3,13 @@ mod labels;
 #[cfg(test)]
 mod test;
 
-use genanki_rs_rev::{Deck, Error, Note, Package, basic_model};
-use log::info;
+use genanki_rs_rev::{Deck, Note, Package, basic_model};
+use log::{debug, trace};
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
 pub fn generate_set() -> Vec<u8> {
-    info!("Hello, world!");
     let labels = labels::get_labels();
     let annotations = annotations::parse_annotations(include_str!(
         "../../unicode/cldr-release-48-2/common/annotationsDerived/fr.xml"
@@ -37,17 +36,18 @@ pub fn generate_set() -> Vec<u8> {
                         &annot.tts,
                     ],
                 )
-                .unwrap(),
+                .expect("Cannot create new note"),
             );
         } else {
-            info!("Emoji {emoji} has no annotation in french");
+            debug!("Emoji {emoji} has no annotation in french");
         }
     }
 
-    let package = Package::new(vec![deck], std::collections::HashMap::new()).unwrap();
+    let package = Package::new(vec![deck], std::collections::HashMap::new())
+        .expect("Cannot create package for saving");
     let mut out = vec![];
-    package.write(&mut out).unwrap();
-    info!("out ({}): {out:?}", out.len());
+    package.write(&mut out).expect("DB serialization failed");
+    trace!("out ({}): {out:?}", out.len());
     out
 }
 
