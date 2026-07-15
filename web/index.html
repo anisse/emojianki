@@ -51,7 +51,9 @@
       }
       option:checked {
         font-weight: bold;
-        background: var(--pink) !important;
+        background: var(--pink);
+        /* Firefox hack: override default blue color with an inward box-shadow */
+        box-shadow: 0 0 10px 100px var(--pink) inset;
       }
       option:checked, option:hover, option:focus {
         color: var(--inverted-text);
@@ -60,7 +62,7 @@
         background: var(--rosewater);
       }
       option:focus{
-        background: var(--flamingo) !important;
+        background: var(--flamingo);
       }
       h1 {
           font-weight: 900;
