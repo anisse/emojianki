@@ -1,0 +1,50 @@
+name: Build and test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-26.04, ubuntu-24.04]
+        experimental: [false]
+        toolchain: [ "stable", "beta" ]
+        include:
+          - toolchain: "nightly"
+            experimental: true
+            os: ubuntu-26.04
+
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        submodules: true
+
+    - name: Prepare
+      if: runner.os == 'Linux'
+      run: sudo apt update && sudo apt install -y libsqlite3-dev
+
+    - name: Install rust
+      id: toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        target: wasm32-unknown-unknown
+        toolchain: ${{ matrix.toolchain }}
+        rustflags: ""
+        cache: false
+
+    - name: Build
+      run: cargo build --verbose --target wasm32-unknown-unknown
+
+    - name: Run tests
+      run: cargo test --verbose
