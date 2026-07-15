@@ -158,7 +158,17 @@ mod tests {
             "Test name".to_string(),
             include_str!("../cldr/common/annotations/fr.xml").as_bytes(),
             include_str!("../cldr/common/annotationsDerived/fr.xml").as_bytes(),
-            vec!["Flags".to_string()],
+            [
+                "Activities",
+                "Smileys & People",
+                "Objects",
+                "Flags",
+                "Symbols",
+                "Travel & Places",
+            ]
+            .into_iter()
+            .map(str::to_string)
+            .collect(),
         );
     }
 }
