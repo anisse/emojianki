@@ -4,12 +4,65 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title> Emoji Anki cards </title>
+    <link rel="stylesheet" href="catppuccin.css">
+    <link rel="stylesheet" href="mvp.css">
     <style type="text/css">
-      body {
-        margin: 0;
+      :root {
+        color-scheme: light dark;
+        /* MVP - cattpuccin integration */
+        --color-accent: var(--surface0);
+        --color-bg: var(--base);
+        --color-bg-secondary: var(--mantle);
+        --color-link: var(--blue);
+        --color-secondary: var(--mauve);
+        --color-secondary-accent: var(--surface1);
+        --color-shadow: var(--surface0);
+        --color-table: var(--crust);
+        --color-text: var(--text);
+        --color-text-secondary: var(--subtext0);
+        --color-scrollbar: var(--surface2);
+        --inverted-text: var(--base);
+
+        --font-family: -apple-system,BlinkMacSystemFont,avenir next,avenir,segoe ui,helvetica neue,Cantarell,Ubuntu,roboto,noto,helvetica,arial,sans-serif;
+      }
+
+      * {
+        /* MVP override */
+        scrollbar-width: auto;
       }
       select {
-        display: block;
+        appearance: base-select; /* Chrome only, but soon in FF, maybe */
+        border: 2px solid var(--color-shadow);
+        border-radius: 8px;
+        background: var(--color-table);
+        padding: 0;
+        width: 300px;
+        max-height: 30%;
+      }
+
+      option {
+        padding: 10px;
+      }
+
+      option:nth-of-type(odd) {
+        background: var(--color-bg-secondary);
+      }
+      option:checked {
+        font-weight: bold;
+        background: var(--pink) !important;
+      }
+      option:checked, option:hover, option:focus {
+        color: var(--inverted-text);
+      }
+      option:hover {
+        background: var(--rosewater);
+      }
+      option:focus{
+        background: var(--flamingo) !important;
+      }
+      h1 {
+          font-weight: 900;
+          color: var(--color-secondary);
       }
     </style>
   </head>
@@ -110,7 +163,7 @@
     <h1>Emoji Anki</h1>
     <p>Learn languages, flags, or simply emoji names, with Anki.</p>
     <label for="lang">Pick a language</label>
-    <select id="lang" name="languages" size="16">
+    <select id="lang" name="languages" size="10">
     </select>
     <label for="cat">Pick an emoji category</label>
     <select id="cat" name="categories" size="8" multiple>
