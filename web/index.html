@@ -73,8 +73,15 @@
         background-image: linear-gradient(120deg,var(--mauve),var(--pink));
         display: block;
       }
-      section aside {
+      section aside, fieldset {
         border: 0;
+      }
+      header {
+        padding: 0;
+      }
+      label {
+        padding: 5px;
+        width: 80%;
       }
     </style>
   </head>
@@ -124,18 +131,18 @@
               console.error(error.message);
           }
       }
-      async function downloadDeck(ea, langSelect, catSelect) {
+      async function downloadDeck(ea, langSelect, catFieldSet) {
         const annot = await getData("cldr/annotations/" + langSelect.value + ".xml");
         const annotDerived = await getData("cldr/annotationsDerived/" + langSelect.value + ".xml");
-        const opts = Array.from(catSelect.selectedOptions);
-        const name = "EmojiAnki: " + langSelect.selectedOptions[0].innerText + " - " + opts.map((o) => o.innerText).join(", ");
+        const checked = Array.from(document.getElementById("cat").childNodes.values().filter((c) => c.checked));
+        const name = "EmojiAnki: " + langSelect.selectedOptions[0].innerText + " - " + checked.map((c) => c.value).join(", ");
         var filename = "EmojiAnki_" + langSelect.selectedOptions[0].innerText.replaceAll(" ", "-");
-        if (opts.length == 1) {
-          filename += "_" +  opts[0].innerText.replaceAll(" ", "-");
+        if (checked.length == 1) {
+          filename += "_" +  checked[0].value.replaceAll(" ", "-");
         }
         filename += ".apkg";
         const out = ea.generate_set(name, annot, annotDerived,
-                opts.map((o) => o.value));
+                checked.map((c) => c.name));
         downloadBlob(out, filename, 'application/octet-stream');
       }
 
@@ -157,17 +164,24 @@
               option.value = key;
               langSelect.add(option);
           })
-        const catSelect = document.getElementById("cat");
+        const catFieldSet = document.getElementById("cat");
         categories
           .map((l) => [l.name, l.locale_name])
           .sort(([,a],[,b]) => a.toLowerCase().localeCompare(b.toLowerCase()))
           .forEach(([key, text]) => {
-              var option = document.createElement("option");
-              option.text = text;
-              option.value = key;
-              catSelect.add(option);
+              var input = document.createElement("input");
+              var label = document.createElement("label");
+              input.name = key;
+              input.id = key;
+              input.value = text;
+              input.type = "checkbox";
+              label.innerText = text;
+              label.htmlFor = key;
+              catFieldSet.appendChild(input);
+              catFieldSet.appendChild(label);
+              catFieldSet.appendChild(document.createElement("br"));
           })
-        document.getElementById("dl").addEventListener("click", (_e) => downloadDeck(ea, langSelect, catSelect));
+        document.getElementById("dl").addEventListener("click", (_e) => downloadDeck(ea, langSelect, catFieldSet));
       }
       await init();
       await run();
@@ -183,8 +197,9 @@
           <select id="lang" name="languages" size="10"> </select>
         </aside>
         <aside>
-          <h3><label for="cat">Emoji category</label></h3>
-          <select id="cat" name="categories" size="8" multiple> </select>
+          <fieldset id="cat">
+            <h3><legend>Emoji category</legend></h3>
+          </fieldset>
         </aside>
       </section>
       <section>
