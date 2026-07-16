@@ -83,6 +83,13 @@
         padding: 5px;
         width: 80%;
       }
+      #error {
+        visibility: hidden;
+        padding: 0;
+        margin: -32px auto auto;
+        color: var(--red);
+        text-align: var(--justify-important);
+      }
     </style>
   </head>
   <body>
@@ -132,9 +139,19 @@
           }
       }
       async function downloadDeck(ea, langSelect, catFieldSet) {
+        const checked = Array.from(document.getElementById("cat").childNodes.values().filter((c) => c.checked));
+
+        const error = document.getElementById("error");
+        if (checked.length == 0 || langSelect.selectedOptions.length == 0) {
+          console.log("Cannot work");
+          error.style.visibility = "visible";
+          return;
+        } else {
+          error.style.visibility = "hidden";
+        }
+
         const annot = await getData("cldr/annotations/" + langSelect.value + ".xml");
         const annotDerived = await getData("cldr/annotationsDerived/" + langSelect.value + ".xml");
-        const checked = Array.from(document.getElementById("cat").childNodes.values().filter((c) => c.checked));
         const name = "EmojiAnki: " + langSelect.selectedOptions[0].innerText + " - " + checked.map((c) => c.value).join(", ");
         var filename = "EmojiAnki_" + langSelect.selectedOptions[0].innerText.replaceAll(" ", "-");
         if (checked.length == 1) {
@@ -203,6 +220,7 @@
         </aside>
       </section>
       <section>
+        <p id="error">Please select at least a language and category</p>
         <button type="button" id="dl">Download Anki Deck</button>
       </section>
     </main>
