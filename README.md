@@ -1,8 +1,8 @@
 # Emoji Anki: learn with emojis
 
-[Emoji Anki](https://anisse.github.io/emojianki/) lets you generate [Anki flashcards](https://en.wikipedia.org/wiki/Anki) containing just emojis, as well as their description in 150+ languages. You can use it with your native language to learn flags, or emoji names. Or use it with another language to learn the vocabulary associated with emoji objects, animals & nature, etc.
+[Emoji Anki](https://anki.emoji-on.top/) lets you generate [Anki flashcards](https://en.wikipedia.org/wiki/Anki) containing just emojis, as well as their description in 150+ languages. You can use it with your native language to learn flags, or emoji names. Or use it with another language to learn the vocabulary associated with emoji objects, animals & nature, etc.
 
-Select a language, select one ore more Emoji categories, and download the Anki deck; [generation happens directly on the website](https://anisse.github.io/emojianki/).
+Select a language, select one ore more Emoji categories, and download the Anki deck; [generation happens directly on the website](https://anki.emoji-on.top/).
 
 # How it's built
 
