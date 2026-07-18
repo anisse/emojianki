@@ -19,5 +19,4 @@ The project does not accept unprompted contributions. Please open an issue befor
 It is still early, and there a few things that could be added or fixed.
 
  - Stop shipping the whole CLDR XML files, but pre-parse only the necessary parts.
- - Test with more implementations than just Anki desktop and Ankidroid
  - A few more customization options
