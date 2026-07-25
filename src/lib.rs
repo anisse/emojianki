@@ -15,7 +15,7 @@ use charlabels::parse_charlabels;
 use labels::{Labels, get_labels};
 use languages::parse_languages;
 
-use genanki_rs_rev::{Deck, Note, Package, basic_model};
+use genanki_rs_rev::{Deck, Field, Model, Note, Package, Template};
 use log::{debug, trace};
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -107,19 +107,8 @@ impl EmojiAnki {
             for emoji in self.labels.categories[&category].iter() {
                 if let Some(annot) = annotations.get(emoji) {
                     deck.add_note(
-                        Note::new(
-                            basic_model(),
-                            vec![
-                                &format!(
-                                    "<div style=\"\
-                                font-size: 90px; \
-                                text-shadow: 0 0 45px white; \
-                            \">{emoji}</div>"
-                                ),
-                                &annot.tts,
-                            ],
-                        )
-                        .expect("Cannot create new note"),
+                        Note::new(Self::anki_model(), vec![&emoji, &annot.tts])
+                            .expect("Cannot create new note"),
                     );
                     debug!("Emoji {emoji} TTS is {}", annot.tts);
                 } else {
@@ -137,6 +126,42 @@ impl EmojiAnki {
         package.write(&mut out).expect("DB serialization failed");
         trace!("out ({}): {out:?}", out.len());
         out
+    }
+
+    fn anki_model() -> Model {
+        Model::with_options(
+            1784196000,
+            "EmojiAnki Base card",
+            vec![
+                Field::new("Front").font("Arial"),
+                Field::new("Back").font("Arial"),
+            ],
+            vec![
+                Template::new("Card 1")
+                    .qfmt("{{Front}}")
+                    .qfmt("<div class=\"emoji\">{{Front}}</div>")
+                    .afmt("{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}"),
+            ],
+            Some(
+                ".card {
+                    font-family: arial;
+                    font-size: 20px;
+                    line-height: 1.5;
+                    text-align: center;
+                    color: black;
+                    background-color: white;
+                }
+                .emoji {
+                    font-size: 90px; \
+                    text-shadow: 0 0 45px #ffffff; \
+                }
+            ",
+            ),
+            None,
+            None,
+            None,
+            None,
+        )
     }
 }
 
