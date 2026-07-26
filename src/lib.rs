@@ -3,6 +3,7 @@ mod available;
 mod charlabels;
 mod labels;
 mod languages;
+mod statuses;
 #[cfg(test)]
 mod test;
 mod xml;
@@ -14,6 +15,7 @@ use available::LANGUAGES;
 use charlabels::parse_charlabels;
 use labels::{Labels, get_labels};
 use languages::parse_languages;
+use statuses::{Statuses, statuses};
 
 use genanki_rs_rev::{Deck, Field, Model, Note, Package, Template};
 use log::{debug, trace};
@@ -23,12 +25,14 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[wasm_bindgen]
 pub struct EmojiAnki {
     labels: Labels,
+    statuses: Statuses,
 }
 
 #[wasm_bindgen]
 pub fn new_emojianki() -> EmojiAnki {
     EmojiAnki {
         labels: get_labels(),
+        statuses: statuses(),
     }
 }
 
