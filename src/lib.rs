@@ -105,7 +105,18 @@ impl EmojiAnki {
         );
         for category in categories.into_iter() {
             for emoji in self.labels.categories[&category].iter() {
-                if let Some(annot) = annotations.get(emoji) {
+                if let Some(annot) = annotations.get(emoji).or_else(|| {
+                    /* Match without variant selectors in case the annotation is without it
+                     */
+                    annotations.get(
+                        &emoji
+                            .chars()
+                            // This character is a variant selector (color emoji vs text) and is
+                            // not removed by classic unicode normalization
+                            .filter(|c| *c as u32 != 0xfe0f)
+                            .collect::<String>(),
+                    )
+                }) {
                     deck.add_note(
                         Note::new(Self::anki_model(), vec![&emoji, &annot.tts])
                             .expect("Cannot create new note"),
