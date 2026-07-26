@@ -15,7 +15,7 @@ use available::LANGUAGES;
 use charlabels::parse_charlabels;
 use labels::{Labels, get_labels};
 use languages::parse_languages;
-use statuses::{Statuses, statuses};
+use statuses::{Status, Statuses, statuses};
 
 use genanki_rs_rev::{Deck, Field, Model, Note, Package, Template};
 use log::{debug, trace};
@@ -117,19 +117,25 @@ impl EmojiAnki {
                             .chars()
                             // This character is a variant selector (color emoji vs text) and is
                             // not removed by classic unicode normalization
-                            .filter(|c| *c as u32 != 0xfe0f)
+                            .filter(|c| *c != '\u{FE0F}')
                             .collect::<String>(),
                     )
-                }) {
+                }) && let Some(emoji_qual) = self.qualified(emoji)
+                {
                     deck.add_note(
-                        Note::new(Self::anki_model(), vec![&emoji, &annot.tts])
+                        Note::new(Self::anki_model(), vec![&emoji_qual, &annot.tts])
                             .expect("Cannot create new note"),
                     );
-                    debug!("Emoji {emoji} TTS is {}", annot.tts);
+                    debug!(
+                        "Emoji {emoji_qual} ({:?}) TTS is {}",
+                        self.statuses.get(&emoji_qual),
+                        annot.tts
+                    );
                 } else {
                     debug!(
-                        "Emoji {{{emoji}}} {:x?} has no annotation",
+                        "Emoji {{{emoji}}} {:x?} has no annotation or is {:?}",
                         emoji.chars().map(|c| c as u32).collect::<Vec<_>>(),
+                        self.statuses.get(emoji),
                     );
                 }
             }
@@ -177,6 +183,33 @@ impl EmojiAnki {
             None,
             None,
         )
+    }
+    fn qualified(&self, emoji: &str) -> Option<String> {
+        if let Some(status) = self.statuses.get(emoji) {
+            debug!("{emoji} is {status:?}");
+            match status {
+                Status::Component => None,
+                Status::FullyQualified => Some(emoji.to_string()),
+                Status::MinimallyQualified => {
+                    let mut s = String::with_capacity(emoji.len() + 1);
+                    s.push_str(emoji);
+                    s.push('\u{FE0F}');
+                    assert_eq!(self.statuses.get(&s), Some(&Status::FullyQualified));
+                    Some(s)
+                }
+                Status::Unqualified => {
+                    let mut s = String::with_capacity(emoji.len() + 1);
+                    let mut chars = emoji.chars();
+                    s.push(chars.next().expect("One char"));
+                    s.push('\u{FE0F}');
+                    s.extend(chars);
+                    assert_eq!(self.statuses.get(&s), Some(&Status::FullyQualified));
+                    Some(s)
+                }
+            }
+        } else {
+            None
+        }
     }
 }
 
