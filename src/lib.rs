@@ -2,19 +2,14 @@ mod annotations;
 mod available;
 mod charlabels;
 mod labels;
-mod languages;
 mod statuses;
 #[cfg(test)]
 mod test;
 mod xml;
 
-use std::collections::HashSet;
-
 use annotations::parse_annotations;
-use available::LANGUAGES;
 use charlabels::parse_charlabels;
 use labels::{Labels, get_labels};
-use languages::parse_languages;
 use statuses::{Status, Statuses, statuses};
 
 use genanki_rs_rev::{Deck, Field, Model, Note, Package, Template};
@@ -47,24 +42,17 @@ pub struct Pair {
 impl EmojiAnki {
     #[wasm_bindgen]
     pub fn locales(&self) -> Vec<String> {
-        LANGUAGES.iter().map(|s| s.to_string()).collect()
+        available::locales()
     }
     #[wasm_bindgen]
-    pub fn languages(&self, main: &[u8]) -> Vec<Pair> {
-        let supported = available::LANGUAGES
-            .iter()
-            .map(|s| s.to_string())
-            .collect::<HashSet<_>>();
-        let mut languages = parse_languages(unsafe { str::from_utf8_unchecked(main) })
-            .into_iter()
-            .filter(|(k, _)| supported.contains(k))
-            .map(|(k, v)| Pair {
-                name: k,
-                locale_name: v,
+    pub fn languages(&self, lang: String) -> Vec<Pair> {
+        available::language_translations(&lang)
+            .unwrap() // TODO: handle
+            .map(|(k, t)| Pair {
+                name: k.to_string(),
+                locale_name: t.to_string(),
             })
-            .collect::<Vec<_>>();
-        languages.sort();
-        languages
+            .collect::<Vec<_>>()
     }
     #[wasm_bindgen]
     pub fn categories(&self, main: &[u8]) -> Vec<Pair> {

@@ -2,6 +2,7 @@
 name = "emojianki"
 version = "0.1.0"
 edition = "2024"
+build = "build/main.rs"
 
 [lib]
 crate-type = ["cdylib"]
@@ -16,6 +17,9 @@ console_log = "1"
 js-sys = "0.3"
 web-sys = { version = "0.3", features = []  }
 icu_experimental = { version = "0.5.0", default-features = false, features = ["compiled_data"] }
+quick-xml = "0.41.0"
+
+[build-dependencies]
 quick-xml = "0.41.0"
 
 [profile.release]
