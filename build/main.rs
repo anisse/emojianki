@@ -36,11 +36,7 @@ fn main() {
 }
 fn available_languages_file_content(langs: &[String], ldmls: &Ldmls) -> String {
     let mut file_content = "pub(crate) static AVAILABLE: &str = \"".to_string();
-    file_content += &langs
-        .iter()
-        .filter(|s| *s != "root") // Root is only used internally and not exposed to the frontend
-        .map(|s| format!("{s}\0"))
-        .collect::<String>();
+    file_content += &langs.iter().map(|s| format!("{s}\0")).collect::<String>();
     file_content += "\";\n";
     file_content += &format!(
         "pub(crate) static TRANSLATIONS: &str = \"{}\";\n",
