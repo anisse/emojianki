@@ -41,6 +41,6 @@ pub fn language_translations(lang: &str) -> Result<impl Iterator<Item = (&str, &
                     ),
             )
             .map(|(l, (tr, par))| if tr != "\x1a" { (l, tr) } else { (l, par) })
-            .filter(|(_, t)| *t != "\x1a"), // filter out empty translations
+            .filter(|(_, t)| *t != "\x18"), // filter out empty translations
     )
 }
