@@ -165,6 +165,9 @@ fn locale_format(baselang: &str, locale: &str, ldmls: &Ldmls) -> LocaleTranslati
         LocaleTranslation::Parent => {
             println!("cargo::warning=Using parent for {locale} in {baselang}")
         }
+        LocaleTranslation::Some(ref x) if x.is_empty() => {
+            panic!("Empty non-None translation for {locale} in {baselang}");
+        }
         LocaleTranslation::Some(_) => {}
     }
     x
@@ -187,12 +190,13 @@ fn _locale_format(baselang: &str, locale: &str, ldmls: &Ldmls) -> LocaleTranslat
     let locale_pattern = value_or_root(
         ldmls,
         baselang,
-        |l| Some(&l.locale_pattern),
+        |l| l.locale_pattern.as_deref(),
         "locale_pattern",
     );
     // Root has no names for language, so there is no fallback, we consider this to be unavailable
     // and return None
     //
+    assert!(!locale_pattern.is_empty());
     let formatted = locale_pattern.replace("{0}", base);
     let mut script_territory = String::new();
     if let Some(script) = ldmls[locale].identity.script.as_ref() {
@@ -222,7 +226,7 @@ fn _locale_format(baselang: &str, locale: &str, ldmls: &Ldmls) -> LocaleTranslat
             let locale_separator = value_or_root(
                 ldmls,
                 baselang,
-                |l| Some(&l.locale_separator),
+                |l| l.locale_separator.as_deref(),
                 "locale_separator",
             );
             script_territory = locale_separator.replace("{0}", &script_territory);

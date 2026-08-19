@@ -12,8 +12,8 @@ pub(crate) type CharLabels = HashMap<String, String>;
 #[derive(Default, Debug)]
 pub(crate) struct Ldml {
     pub(crate) identity: Identity,
-    pub(crate) locale_pattern: String,
-    pub(crate) locale_separator: String,
+    pub(crate) locale_pattern: Option<String>,
+    pub(crate) locale_separator: Option<String>,
     pub(crate) languages: Languages,
     pub(crate) territories: Territories,
     pub(crate) scripts: Scripts,
@@ -65,7 +65,7 @@ pub(crate) fn parse_ldml(s: &str) -> Ldml {
                 ],
                 cb_fn: &mut |e| match e {
                     ParseEvent::Start(_) => {}
-                    ParseEvent::Text(text) => ldml.locale_pattern = text,
+                    ParseEvent::Text(text) => ldml.locale_pattern = Some(text),
                 },
             },
             Matcher {
@@ -77,7 +77,7 @@ pub(crate) fn parse_ldml(s: &str) -> Ldml {
                 ],
                 cb_fn: &mut |e| match e {
                     ParseEvent::Start(_) => {}
-                    ParseEvent::Text(text) => ldml.locale_separator = text,
+                    ParseEvent::Text(text) => ldml.locale_separator = Some(text),
                 },
             },
             Matcher {
