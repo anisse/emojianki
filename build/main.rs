@@ -122,60 +122,97 @@ fn all_languages_names(langs: &[String], ldmls: &Ldmls) -> String {
                     Some(UPPER) | None => {
                         if let Some(parent_translation) = ldmls[parent].languages.get(lang) {
                             if parent == "root" && parent_translation == UPPER {
-                                locale_format(baselang, lang, ldmls).unwrap_or_else(|| {
-                                    println!(
-                                        "cargo::warning=No translation for {lang} in {baselang}"
-                                    );
-                                    "\x18".to_string()
-                                })
+                                locale_format(baselang, lang, ldmls).into_string()
                             } else {
                                 "\x1a".to_string()
                             }
                         } else {
                             // Use locale pattern ??
-                            locale_format(baselang, lang, ldmls).unwrap_or_else(|| {
-                                println!("cargo::warning=No translation for {lang} in {baselang}");
-                                "\x18".to_string()
-                            })
+                            locale_format(baselang, lang, ldmls).into_string()
                         }
                     }
                     Some(t) => t.to_string(),
                 }
-            );
+            )
         }
         out += "\0";
     }
     out
 }
-fn locale_format(baselang: &str, locale: &str, ldmls: &Ldmls) -> Option<String> {
+enum LocaleTranslation {
+    None,
+    Parent,
+    Some(String),
+}
+impl LocaleTranslation {
+    fn into_string(self) -> String {
+        match self {
+            LocaleTranslation::None => "\x18".to_string(),
+            LocaleTranslation::Parent => "\x1a".to_string(),
+            LocaleTranslation::Some(s) => s,
+        }
+    }
+}
+fn locale_format(baselang: &str, locale: &str, ldmls: &Ldmls) -> LocaleTranslation {
+    let x = _locale_format(baselang, locale, ldmls);
+    match x {
+        LocaleTranslation::None => {
+            println!("cargo::warning=No translation for {locale} in {baselang}")
+        }
+        LocaleTranslation::Parent => {
+            println!("cargo::warning=Using parent for {locale} in {baselang}")
+        }
+        LocaleTranslation::Some(_) => {}
+    }
+    x
+}
+fn _locale_format(baselang: &str, locale: &str, ldmls: &Ldmls) -> LocaleTranslation {
     // Nothing to format
-    locale.contains('_').then_some(())?;
+    if !locale.contains('_') {
+        return LocaleTranslation::None;
+    }
+    let language = &ldmls[locale].identity.language;
+    let mut has_from_item = false;
+    let base = match value_or_parent(ldmls, baselang, |l| {
+        l.languages.get(language).map(String::as_str)
+    })
+    .update_is_item(&mut has_from_item)
+    {
+        None => return LocaleTranslation::None,
+        Some(t) => t,
+    };
     let locale_pattern = value_or_root(
         ldmls,
         baselang,
         |l| Some(&l.locale_pattern),
         "locale_pattern",
     );
-    let language = &ldmls[locale].identity.language;
     // Root has no names for language, so there is no fallback, we consider this to be unavailable
     // and return None
     //
-    // TODO: if the locale_format is identitcal to the parent's, do not duplicate it
-    let base = value_or_parent(ldmls, baselang, |l| {
-        l.languages.get(language).map(String::as_str)
-    })?;
     let formatted = locale_pattern.replace("{0}", base);
     let mut script_territory = String::new();
     if let Some(script) = ldmls[locale].identity.script.as_ref() {
-        let script_name = value_or_parent(ldmls, baselang, |l| {
+        // TODO: check if lang + script have a description
+        let script_name = match value_or_parent(ldmls, baselang, |l| {
             l.scripts.get(script).map(String::as_str)
-        })?;
+        })
+        .update_is_item(&mut has_from_item)
+        {
+            None => return LocaleTranslation::None,
+            Some(t) => t,
+        };
         script_territory = script_name.to_string();
     }
     if let Some(territory) = ldmls[locale].identity.territory.as_ref() {
-        let territory_name = value_or_parent(ldmls, baselang, |l| {
+        let territory_name = match value_or_parent(ldmls, baselang, |l| {
             l.territories.get(territory).map(String::as_str)
-        })?;
+        })
+        .update_is_item(&mut has_from_item)
+        {
+            None => return LocaleTranslation::None,
+            Some(t) => t,
+        };
         if script_territory.is_empty() {
             script_territory = territory_name.to_string();
         } else {
@@ -189,27 +226,48 @@ fn locale_format(baselang: &str, locale: &str, ldmls: &Ldmls) -> Option<String> 
             script_territory = script_territory.replace("{1}", territory_name);
         }
     }
-    Some(formatted.replace("{1}", &script_territory))
+    if has_from_item {
+        LocaleTranslation::Some(formatted.replace("{1}", &script_territory))
+    } else {
+        LocaleTranslation::Parent
+    }
 }
-
+enum ItemOrParent<T> {
+    None,
+    Parent(T),
+    Item(T),
+}
+impl<T> ItemOrParent<T> {
+    // Return true if the value from the item itself
+    fn update_is_item(self, has_from_item: &mut bool) -> Option<T> {
+        match self {
+            ItemOrParent::None => None,
+            ItemOrParent::Parent(t) => Some(t),
+            ItemOrParent::Item(t) => {
+                *has_from_item = true;
+                Some(t)
+            }
+        }
+    }
+}
 fn value_or_parent<'a, 'b>(
     ldmls: &'a Ldmls,
     baselocale: &str,
     field: impl Fn(&'a Ldml) -> Option<&'a str>,
-) -> Option<&'a str> {
+) -> ItemOrParent<&'a str> {
     if let Some(v) = field(&ldmls[baselocale])
         && v != UPPER
     {
-        return Some(v);
+        return ItemOrParent::Item(v);
     }
     let parent = &ldmls[baselocale].identity.language;
     if parent != baselocale
         && let Some(v) = field(&ldmls[parent])
         && v != UPPER
     {
-        return Some(v);
+        return ItemOrParent::Parent(v);
     }
-    None
+    ItemOrParent::None
 }
 fn value_or_root<'a, 'b>(
     ldmls: &'a Ldmls,
