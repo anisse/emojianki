@@ -118,26 +118,29 @@ fn all_languages_names(langs: &[String], ldmls: &Ldmls) -> String {
         for lang in langs.iter() {
             out += &format!(
                 "{}\0",
-                match ldmls[baselang].languages.get(lang).map(String::as_str) {
-                    Some(UPPER) | None => {
-                        if let Some(parent_translation) = ldmls[parent].languages.get(lang) {
-                            if parent == "root" && parent_translation == UPPER {
-                                locale_format(baselang, lang, ldmls).into_string()
-                            } else {
-                                "\x1a".to_string()
-                            }
-                        } else {
-                            // Use locale pattern ??
-                            locale_format(baselang, lang, ldmls).into_string()
-                        }
-                    }
-                    Some(t) => t.to_string(),
-                }
+                single_locale_translation(ldmls, baselang, lang, parent)
             )
         }
         out += "\0";
     }
     out
+}
+fn single_locale_translation(ldmls: &Ldmls, baselang: &str, lang: &str, parent: &str) -> String {
+    match ldmls[baselang].languages.get(lang).map(String::as_str) {
+        Some(UPPER) | None => {
+            if let Some(parent_translation) = ldmls[parent].languages.get(lang) {
+                if parent == "root" && parent_translation == UPPER {
+                    locale_format(baselang, lang, ldmls).into_string()
+                } else {
+                    "\x1a".to_string()
+                }
+            } else {
+                // Use locale pattern ??
+                locale_format(baselang, lang, ldmls).into_string()
+            }
+        }
+        Some(t) => t.to_string(),
+    }
 }
 enum LocaleTranslation {
     None,
