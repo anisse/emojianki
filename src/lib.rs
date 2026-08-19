@@ -47,7 +47,7 @@ impl EmojiAnki {
     #[wasm_bindgen]
     pub fn languages(&self, lang: String) -> Vec<Pair> {
         available::language_translations(&lang)
-            .unwrap() // TODO: handle
+            .expect("Non-empty list of languages")
             .map(|(k, t)| Pair {
                 name: k.to_string(),
                 locale_name: t.to_string(),
