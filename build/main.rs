@@ -108,6 +108,7 @@ fn ldmls(langs: &[String]) -> Ldmls {
 //
 fn all_languages_names(langs: &[String], ldmls: &Ldmls) -> String {
     let mut out = String::new();
+    let mut wd = Warning::default();
     for baselang in langs.iter() {
         let parent = if baselang.contains('_') {
             &ldmls[baselang].identity.language
@@ -118,25 +119,32 @@ fn all_languages_names(langs: &[String], ldmls: &Ldmls) -> String {
         for lang in langs.iter() {
             out += &format!(
                 "{}\0",
-                single_locale_translation(ldmls, baselang, lang, parent)
+                single_locale_translation(ldmls, baselang, lang, parent, &mut wd)
             )
         }
         out += "\0";
     }
+    wd.render();
     out
 }
-fn single_locale_translation(ldmls: &Ldmls, baselang: &str, lang: &str, parent: &str) -> String {
+fn single_locale_translation<'a>(
+    ldmls: &Ldmls,
+    baselang: &'a str,
+    lang: &'a str,
+    parent: &str,
+    wd: &mut Warning<'a>,
+) -> String {
     match ldmls[baselang].languages.get(lang).map(String::as_str) {
         Some(UPPER) | None => {
             if let Some(parent_translation) = ldmls[parent].languages.get(lang) {
                 if parent == "root" && parent_translation == UPPER {
-                    locale_format(baselang, lang, ldmls).into_string()
+                    locale_format(baselang, lang, ldmls, wd).into_string()
                 } else {
                     "\x1a".to_string()
                 }
             } else {
                 // Use locale pattern ??
-                locale_format(baselang, lang, ldmls).into_string()
+                locale_format(baselang, lang, ldmls, wd).into_string()
             }
         }
         Some(t) => t.to_string(),
@@ -156,14 +164,44 @@ impl LocaleTranslation {
         }
     }
 }
-fn locale_format(baselang: &str, locale: &str, ldmls: &Ldmls) -> LocaleTranslation {
+#[derive(Default)]
+struct Warning<'a> {
+    data: HashMap<&'a str, Vec<&'a str>>,
+}
+impl<'a> Warning<'a> {
+    fn add(&mut self, baselang: &'a str, locale: &'a str) {
+        self.data.entry(baselang).or_default().push(locale);
+    }
+    fn render(&self) {
+        let mut msg = "cargo::warning=".to_string();
+        msg += &format!("{} langs with missing translations: ", self.data.len());
+        for (lang, details) in self.data.iter() {
+            msg += &format!("{lang}: {}", details.len());
+            if details.len() < 5 {
+                msg += " (";
+                msg += &details.join(",");
+                msg += ")";
+            }
+            msg += "; " // proper joining will wait for Iterator intersperse stabilization
+        }
+        msg += ".";
+        println!("{}", msg);
+    }
+}
+fn locale_format<'a>(
+    baselang: &'a str,
+    locale: &'a str,
+    ldmls: &Ldmls,
+    wd: &mut Warning<'a>,
+) -> LocaleTranslation {
     let x = _locale_format(baselang, locale, ldmls);
     match x {
         LocaleTranslation::None => {
-            println!("cargo::warning=No translation for {locale} in {baselang}")
+            wd.add(baselang, locale)
+            //println!("cargo::warning=No translation for {locale} in {baselang}")
         }
         LocaleTranslation::Parent => {
-            println!("cargo::warning=Using parent for {locale} in {baselang}")
+            //println!("cargo::warning=Using parent for {locale} in {baselang}")
         }
         LocaleTranslation::Some(ref x) if x.is_empty() => {
             panic!("Empty non-None translation for {locale} in {baselang}");
