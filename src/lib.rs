@@ -1,6 +1,5 @@
 mod annotations;
 mod available;
-mod charlabels;
 mod labels;
 mod statuses;
 #[cfg(test)]
@@ -8,7 +7,6 @@ mod test;
 mod xml;
 
 use annotations::parse_annotations;
-use charlabels::parse_charlabels;
 use labels::{Labels, get_labels};
 use statuses::{Status, Statuses, statuses};
 
@@ -55,24 +53,15 @@ impl EmojiAnki {
             .collect::<Vec<_>>()
     }
     #[wasm_bindgen]
-    pub fn categories(&self, main: &[u8]) -> Vec<Pair> {
-        let s = unsafe { str::from_utf8_unchecked(main) };
-        let clabels = parse_charlabels(s);
-        debug!("{:?}", self.labels.categories);
-        let mut categories = self
-            .labels
-            .categories
-            .keys()
-            .inspect(|k| {
-                let r = k.to_ascii_lowercase().replace("&", "_").replace(" ", "");
-                debug!("{r} = {:?}", clabels.get(&r));
-            })
-            .map(|k| Pair {
-                name: k.clone(),
-                locale_name: clabels[&k.to_ascii_lowercase().replace("&", "_").replace(" ", "")]
-                    .clone(),
+    pub fn categories(&self, lang: String) -> Vec<Pair> {
+        let mut categories = available::categories(&lang)
+            .expect("Non-empty list of categories")
+            .map(|(k, v)| Pair {
+                name: k.to_string(),
+                locale_name: v.to_string(),
             })
             .collect::<Vec<_>>();
+
         categories.sort();
         categories
     }

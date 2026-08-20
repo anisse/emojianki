@@ -170,6 +170,7 @@
         const locales = ea.locales();
         const locale = getLanguage(locales);
         const languages = ea.languages(locale);
+        const categories = ea.categories(locale);
         const langSelect = document.getElementById("lang");
         languages
           .map((l) => [l.name, l.locale_name])
@@ -180,8 +181,6 @@
               option.value = key;
               langSelect.add(option);
           })
-        const main = await getData("cldr/main/" + locale + ".xml");
-        const categories = ea.categories(main);
         const catFieldSet = document.getElementById("cat");
         categories
           .map((l) => [l.name, l.locale_name])

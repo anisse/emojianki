@@ -1,5 +1,4 @@
 mod categories;
-mod charlabels;
 mod languages;
 mod ldml;
 mod xml;
@@ -35,19 +34,24 @@ fn main() {
     println!("cargo::rerun-if-changed={}", ANNOT_DERIVED_DIR);
 }
 fn available_languages_file_content(langs: &[String], ldmls: &Ldmls) -> String {
-    let mut file_content = "pub(crate) static AVAILABLE: &str = \"".to_string();
+    let mut file_content = "pub(crate) static LANGUAGES_AVAILABLE: &str = \"".to_string();
     file_content += &langs.iter().map(|s| format!("{s}\0")).collect::<String>();
     file_content += "\";\n";
     file_content += &format!(
-        "pub(crate) static TRANSLATIONS: &str = \"{}\";\n",
-        all_languages_names(langs, ldmls)
+        "pub(crate) static LANGUAGES_TRANSLATIONS: &str = \"{}\";\n",
+        all_languages_translations(langs, ldmls)
     );
-    /*
     file_content += &format!(
-        "pub(crate) static CATEGORIES: &str = \"{}\";\n",
-        all_categories_names(langs, ldmls)
+        "pub(crate) static CATEGORIES_AVAILABLE: &str = \"{}\";\n",
+        categories::get_categories()
+            .into_iter()
+            .map(|s| format!("{s}\0"))
+            .collect::<String>()
     );
-    */
+    file_content += &format!(
+        "pub(crate) static CATEGORIES_TRANSLATIONS: &str = \"{}\";\n",
+        all_categories_translations(ldmls, langs)
+    );
     file_content
 }
 fn languages() -> Vec<String> {
@@ -102,7 +106,7 @@ fn ldmls(langs: &[String]) -> Ldmls {
 //  be used
 //  - two \0\0 separate languages
 //
-fn all_languages_names(langs: &[String], ldmls: &Ldmls) -> String {
+fn all_languages_translations(langs: &[String], ldmls: &Ldmls) -> String {
     let mut out = String::new();
     let mut wd = Warning::default();
     for baselang in langs.iter() {
@@ -279,7 +283,7 @@ enum ItemOrParent<T> {
     Item(T),
 }
 impl<T> ItemOrParent<T> {
-    // Return true if the value from the item itself
+    // Update item with true if the value from the item itself
     fn update_is_item(self, has_from_item: &mut bool) -> Option<T> {
         match self {
             ItemOrParent::None => None,
@@ -341,26 +345,30 @@ fn value_or_root<'a, 'b>(
 //  - for each language, a \0 is used as separator between language translations
 //  - if a character label has no translation panic
 //  - two \0\0 separate languages
-fn all_categories_names(langs: &[String]) -> String {
+fn all_categories_translations(ldmls: &Ldmls, langs: &[String]) -> String {
     let categories = categories::get_categories();
     let mut out = String::new();
-    for baselang in langs.iter() {
-        let filename = format!("{MAIN_LANG_DIR}/{baselang}.xml");
-        let content = fs::read(&filename).unwrap_or_else(|e| panic!("cannot read {filename}: {e}"));
-        let labels = charlabels::parse_charlabels(
-            str::from_utf8(&content).unwrap_or_else(|e| panic!("not utf8 in {filename}: {e}")),
-        );
-        for label in categories.iter() {
-            let cat_lower = label
+    let lower_labels: Vec<String> = categories
+        .iter()
+        .map(|label| {
+            label
                 .to_ascii_lowercase()
                 .replace("&", "_")
-                .replace(" ", "");
+                .replace(" ", "")
+        })
+        .collect();
+    for baselang in langs.iter() {
+        for cat_lower in lower_labels.iter() {
             out += &format!(
                 "{}\0",
-                labels
-                    .get(&cat_lower)
-                    //.unwrap_or(&"\x18".to_string())
-                    .unwrap_or_else(|| panic!("Label for {label} in {baselang} not found"))
+                // TODO: support parent to prevent duplication?
+                value_or_root(
+                    ldmls,
+                    baselang,
+                    |l| { l.charlabels.get(cat_lower).map(String::as_str) },
+                    // TODO: format lazily instead
+                    &format!("Label for {cat_lower} in {baselang} not found")
+                )
             );
         }
         out += "\0";

@@ -6,14 +6,14 @@ use log::trace;
 #[derive(Debug)]
 pub(crate) struct Labels {
     pub(crate) categories: HashMap<String, Vec<String>>,
-    pub(crate) emojis: HashMap<String, String>,
+    //pub(crate) emojis: HashMap<String, String>,
 }
 
 pub(crate) fn get_labels() -> Labels {
     let file_content = include_str!("../cldr/common/properties/labels.txt");
     let mut labels = Labels {
         categories: HashMap::new(),
-        emojis: HashMap::new(),
+        //emojis: HashMap::new(),
     };
     for l in file_content.lines() {
         if l.starts_with("#") || l.is_empty() {
@@ -30,7 +30,7 @@ pub(crate) fn get_labels() -> Labels {
                 .or_default()
                 .push(em.to_string());
             // excessive alloc, should point to an enum / ID
-            labels.emojis.insert(em.to_string(), cat.to_string());
+            //labels.emojis.insert(em.to_string(), cat.to_string());
         };
         if set.has_strings() {
             for s in set.strings().iter() {
