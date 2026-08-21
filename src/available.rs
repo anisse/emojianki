@@ -54,8 +54,8 @@ fn lang_parent(lang: &str) -> Result<(usize, usize), String> {
 }
 
 pub(crate) fn categories(lang: &str) -> Result<impl Iterator<Item = (&str, &str)>, String> {
-    let parent = lang.split('_').next().ok_or("empty string".to_string())?;
-    let (idx, idx_parent) = lang_parent(lang)?;
+    // For now there is no parent fallback in categories, where there isn't that much data
+    let (idx, _) = lang_parent(lang)?;
     Ok(CATEGORIES_AVAILABLE.split("\0").zip(
         CATEGORIES_TRANSLATIONS
             .split("\0\0")
