@@ -1,33 +1,21 @@
 mod annotations;
 mod available;
-mod labels;
-mod statuses;
 #[cfg(test)]
 mod test;
 mod xml;
 
 use annotations::parse_annotations;
-use labels::{Labels, get_labels};
-use statuses::{Status, Statuses, statuses};
 
 use genanki_rs_rev::{Deck, Field, Model, Note, Package, Template};
 use log::{debug, trace};
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-#[wasm_bindgen]
-pub struct EmojiAnki {
-    labels: Labels,
-    statuses: Statuses,
-}
+use crate::available::emojis;
 
 #[wasm_bindgen]
-pub fn new_emojianki() -> EmojiAnki {
-    EmojiAnki {
-        labels: get_labels(),
-        statuses: statuses(),
-    }
-}
+#[derive(Default)]
+pub struct EmojiAnki {}
 
 #[wasm_bindgen(getter_with_clone)]
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
@@ -38,6 +26,10 @@ pub struct Pair {
 
 #[wasm_bindgen]
 impl EmojiAnki {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Default::default()
+    }
     #[wasm_bindgen]
     pub fn locales(&self) -> Vec<String> {
         available::locales()
@@ -84,8 +76,11 @@ impl EmojiAnki {
             &name,
             "EmojiAnki: https://anisse.github.io/emojianki",
         );
-        for category in categories.into_iter() {
-            for emoji in self.labels.categories[&category].iter() {
+        for (category, emojis) in emojis().expect("Cannot parse built-in emojis") {
+            if !categories.contains(&category.to_string()) {
+                continue;
+            }
+            for emoji in emojis {
                 if let Some(annot) = annotations.get(emoji).or_else(|| {
                     /* Match without variant selectors in case the annotation is without it
                      */
@@ -97,22 +92,15 @@ impl EmojiAnki {
                             .filter(|c| *c != '\u{FE0F}')
                             .collect::<String>(),
                     )
-                }) && let Some(emoji_qual) = self.qualified(emoji)
-                {
+                }) {
                     deck.add_note(
-                        Note::new(Self::anki_model(), vec![&emoji_qual, &annot.tts])
+                        Note::new(Self::anki_model(), vec![emoji, &annot.tts])
                             .expect("Cannot create new note"),
-                    );
-                    debug!(
-                        "Emoji {emoji_qual} ({:?}) TTS is {}",
-                        self.statuses.get(&emoji_qual),
-                        annot.tts
                     );
                 } else {
                     debug!(
-                        "Emoji {{{emoji}}} {:x?} has no annotation or is {:?}",
+                        "Emoji {{{emoji}}} {:x?} has no annotation?",
                         emoji.chars().map(|c| c as u32).collect::<Vec<_>>(),
-                        self.statuses.get(emoji),
                     );
                 }
             }
@@ -161,33 +149,6 @@ impl EmojiAnki {
             None,
         )
     }
-    fn qualified(&self, emoji: &str) -> Option<String> {
-        if let Some(status) = self.statuses.get(emoji) {
-            debug!("{emoji} is {status:?}");
-            match status {
-                Status::Component => None,
-                Status::FullyQualified => Some(emoji.to_string()),
-                Status::MinimallyQualified => {
-                    let mut s = String::with_capacity(emoji.len() + 1);
-                    s.push_str(emoji);
-                    s.push('\u{FE0F}');
-                    assert_eq!(self.statuses.get(&s), Some(&Status::FullyQualified));
-                    Some(s)
-                }
-                Status::Unqualified => {
-                    let mut s = String::with_capacity(emoji.len() + 1);
-                    let mut chars = emoji.chars();
-                    s.push(chars.next().expect("One char"));
-                    s.push('\u{FE0F}');
-                    s.extend(chars);
-                    assert_eq!(self.statuses.get(&s), Some(&Status::FullyQualified));
-                    Some(s)
-                }
-            }
-        } else {
-            None
-        }
-    }
 }
 
 #[wasm_bindgen(start)]
@@ -203,7 +164,7 @@ mod tests {
     #[test]
     fn test_fr_gen() {
         crate::test::setup();
-        let ea = new_emojianki();
+        let ea = EmojiAnki::default();
         ea.generate_set(
             "Test name".to_string(),
             include_str!("../cldr/common/annotations/fr.xml").as_bytes(),

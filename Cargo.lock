@@ -173,6 +173,7 @@ dependencies = [
  "console_log",
  "genanki-rs-rev",
  "icu_experimental",
+ "itertools",
  "js-sys",
  "log",
  "quick-xml",
@@ -565,6 +566,15 @@ checksum = "d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9"
 dependencies = [
  "equivalent",
  "hashbrown 0.17.1",
+]
+
+[[package]]
+name = "itertools"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b4baf93f58d4425749ca49a51c50ebab072c5df6994d08fed93541c331481dc"
+dependencies = [
+ "either",
 ]
 
 [[package]]

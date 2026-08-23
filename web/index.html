@@ -97,7 +97,7 @@
   </head>
   <body>
     <script type="module">
-      import init, { new_emojianki } from "./emojianki.js";
+      import init, { EmojiAnki } from "./emojianki.js";
 
       function downloadURL(data, fileName) {
         const a = document.createElement('a')
@@ -167,7 +167,7 @@
       }
 
       async function run () {
-        const ea = new_emojianki();
+        const ea = new EmojiAnki();
         const locales = ea.locales();
         const locale = getLanguage(locales);
         const languages = ea.languages(locale);

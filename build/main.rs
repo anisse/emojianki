@@ -1,5 +1,7 @@
-mod categories;
+mod annotations;
+mod labels;
 mod ldml;
+mod statuses;
 mod xml;
 
 use std::collections::HashMap;
@@ -8,6 +10,8 @@ use std::fs;
 use std::path::Path;
 
 use ldml::Ldml;
+
+use crate::categories::all_emojis_qualified;
 
 const ANNOT_DERIVED_DIR: &str = "cldr/common/annotationsDerived";
 const MAIN_LANG_DIR: &str = "cldr/common/main/";
@@ -50,6 +54,10 @@ fn available_languages_file_content(langs: &[String], ldmls: &Ldmls) -> String {
     file_content += &format!(
         "pub(crate) static CATEGORIES_TRANSLATIONS: &str = \"{}\";\n",
         all_categories_translations(ldmls, langs)
+    );
+    file_content += &format!(
+        "pub(crate) static EMOJIS_AVAILABLE: &str = \"{}\";\n",
+        all_emojis_qualified()
     );
     file_content
 }

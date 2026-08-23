@@ -21,6 +21,8 @@ quick-xml = "0.41.0"
 
 [build-dependencies]
 quick-xml = "0.41.0"
+icu_experimental = { version = "0.5.0", default-features = false, features = ["compiled_data"] }
+itertools = "0.15.0"
 
 [profile.release]
 lto = true

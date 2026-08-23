@@ -64,3 +64,10 @@ pub(crate) fn categories(lang: &str) -> Result<impl Iterator<Item = (&str, &str)
             .split("\0"),
     ))
 }
+
+pub(crate) fn emojis()
+-> Result<impl Iterator<Item = (&'static str, impl Iterator<Item = &'static str>)>, String> {
+    Ok(CATEGORIES_AVAILABLE
+        .split("\0")
+        .zip(EMOJIS_AVAILABLE.split("\0\0").map(|l| l.split("\0"))))
+}
