@@ -76,7 +76,7 @@ fn process_start_event<'a>(e: BytesStart<'a>, path: &mut Vec<String>, matches: &
         cb_fn,
     } in matches.iter_mut()
     {
-        if allowed_path == &path {
+        if allowed_path == path {
             let attrs = e
                 .attributes()
                 .map(|a| {

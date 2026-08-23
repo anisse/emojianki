@@ -9,6 +9,7 @@ use std::env;
 use std::fs;
 use std::path::Path;
 
+use itertools::Itertools;
 use ldml::Ldml;
 
 use crate::annotations::Annotations;
@@ -124,7 +125,10 @@ fn ldmls(langs: &[String]) -> Ldmls {
 //
 fn all_languages_translations(langs: &[String], ldmls: &Ldmls) -> String {
     let mut out = String::new();
-    let mut wd = Warning::default();
+    let mut wd = Warning {
+        name: "locales",
+        ..Default::default()
+    };
     for baselang in langs.iter() {
         let parent = if baselang.contains('_') {
             &ldmls[baselang].identity.language
@@ -182,6 +186,7 @@ impl LocaleTranslation {
 }
 #[derive(Default)]
 struct Warning<'a> {
+    name: &'a str,
     data: HashMap<&'a str, Vec<&'a str>>,
 }
 impl<'a> Warning<'a> {
@@ -190,8 +195,12 @@ impl<'a> Warning<'a> {
     }
     fn render(&self) {
         let mut msg = "cargo::warning=".to_string();
-        msg += &format!("{} langs with missing translations: ", self.data.len());
-        for (lang, details) in self.data.iter() {
+        msg += &format!(
+            "{} langs with {} missing translations: ",
+            self.data.len(),
+            self.name,
+        );
+        for (lang, details) in self.data.iter().sorted() {
             msg += &format!("{lang}: {}", details.len());
             if details.len() < 5 {
                 msg += " (";
@@ -403,27 +412,29 @@ fn create_annotations_files(langs: &[String], ldmls: &Ldmls) {
         //println!("cargo::warning=Annotations for {lang} : {annot_lang:?}");
         annotations.insert(lang, annot_lang);
     }
+    let mut warn = Warning {
+        name: "emojis",
+        ..Default::default()
+    };
+    let emojis = emojis_qualified_per_category();
     for lang in langs.iter() {
         let out_filename = format!("{OUT_DIR}/{lang}.txt");
-        let content = emojis_qualified_per_category()
-            .into_iter()
+        let content = emojis
+            .iter()
             .map(|l| {
-                l.into_iter()
+                l.iter()
                     .map(|emoji| {
-                        let annot = annotation_get(&annotations[lang], &emoji);
+                        let annot = annotation_get(&annotations[lang], emoji);
                         let annot = match annot.map(String::as_str) {
-                            None|Some(UPPER) => annotation_get(&annotations[&ldmls[lang].identity.language], &emoji), //parent
+                            None | Some(UPPER) => {
+                                annotation_get(&annotations[&ldmls[lang].identity.language], emoji)
+                            } //parent
                             Some(_) => annot,
                         };
-                        annot.cloned()
-                        .unwrap_or_else(|| {
-                            println!(
-                                "cargo::warning=Emoji {{{emoji}}} {:x?} has no annotation in {lang}",
-                                emoji.chars().map(|c| c as u32).collect::<Vec<_>>(),
-                            );
+                        annot.cloned().unwrap_or_else(|| {
+                            warn.add(lang, emoji);
                             NO_DATA.to_string()
                         })
-
                     })
                     .map(|e| format!("{e}\0"))
                     .collect::<String>()
@@ -433,6 +444,7 @@ fn create_annotations_files(langs: &[String], ldmls: &Ldmls) {
         fs::write(&out_filename, content)
             .unwrap_or_else(|e| panic!("Writing {out_filename} failed: {e}"));
     }
+    warn.render();
 }
 fn annotation_get<'a>(annotations: &'a Annotations, emoji: &String) -> Option<&'a String> {
     annotations.get(emoji).or_else(|| {
