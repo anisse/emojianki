@@ -1,17 +1,15 @@
-mod annotations;
+mod annot;
 mod available;
 #[cfg(test)]
 mod test;
-mod xml;
 
-use annotations::parse_annotations;
+use annot::parse_annots;
+use available::emojis;
 
 use genanki_rs_rev::{Deck, Field, Model, Note, Package, Template};
-use log::{debug, trace};
+use log::trace;
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::wasm_bindgen;
-
-use crate::available::emojis;
 
 #[wasm_bindgen]
 #[derive(Default)]
@@ -62,47 +60,25 @@ impl EmojiAnki {
     pub fn generate_set(
         &self,
         name: String,
-        annot: &[u8],
-        annot_derived: &[u8],
+        annotations: &[u8],
         categories: Vec<String>,
     ) -> Vec<u8> {
-        let annot_s = unsafe { str::from_utf8_unchecked(annot) };
-        let annot_derived_s = unsafe { str::from_utf8_unchecked(annot_derived) };
-        let mut annotations = parse_annotations(annot_s);
-        annotations.extend(parse_annotations(annot_derived_s));
+        let annotations = unsafe { str::from_utf8_unchecked(annotations) };
 
         let mut deck = Deck::new(
             20260717,
             &name,
             "EmojiAnki: https://anisse.github.io/emojianki",
         );
-        for (category, emojis) in emojis().expect("Cannot parse built-in emojis") {
+        for ((category, emojis), annots) in emojis().zip(parse_annots(annotations)) {
             if !categories.contains(&category.to_string()) {
                 continue;
             }
-            for emoji in emojis {
-                if let Some(annot) = annotations.get(emoji).or_else(|| {
-                    /* Match without variant selectors in case the annotation is without it
-                     */
-                    annotations.get(
-                        &emoji
-                            .chars()
-                            // This character is a variant selector (color emoji vs text) and is
-                            // not removed by classic unicode normalization
-                            .filter(|c| *c != '\u{FE0F}')
-                            .collect::<String>(),
-                    )
-                }) {
-                    deck.add_note(
-                        Note::new(Self::anki_model(), vec![emoji, &annot.tts])
-                            .expect("Cannot create new note"),
-                    );
-                } else {
-                    debug!(
-                        "Emoji {{{emoji}}} {:x?} has no annotation?",
-                        emoji.chars().map(|c| c as u32).collect::<Vec<_>>(),
-                    );
-                }
+            for (emoji, annot) in emojis.zip(annots).filter(|(_, a)| !a.is_empty()) {
+                deck.add_note(
+                    Note::new(Self::anki_model(), vec![emoji, annot])
+                        .expect("Cannot create new note"),
+                );
             }
         }
 
@@ -167,8 +143,7 @@ mod tests {
         let ea = EmojiAnki::default();
         ea.generate_set(
             "Test name".to_string(),
-            include_str!("../cldr/common/annotations/fr.xml").as_bytes(),
-            include_str!("../cldr/common/annotationsDerived/fr.xml").as_bytes(),
+            include_str!("../web/data/fr.txt").as_bytes(),
             [
                 "Activities",
                 "Smileys & People",

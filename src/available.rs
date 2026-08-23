@@ -7,7 +7,9 @@ pub fn locales() -> Vec<String> {
         .collect()
 }
 
-pub fn language_translations(lang: &str) -> Result<impl Iterator<Item = (&str, &str)>, String> {
+pub(crate) fn language_translations(
+    lang: &str,
+) -> Result<impl Iterator<Item = (&str, &str)>, String> {
     let parent = lang.split('_').next().ok_or("empty string".to_string())?;
     let (idx, idx_parent) = lang_parent(lang)?;
     Ok(
@@ -65,9 +67,8 @@ pub(crate) fn categories(lang: &str) -> Result<impl Iterator<Item = (&str, &str)
     ))
 }
 
-pub(crate) fn emojis()
--> Result<impl Iterator<Item = (&'static str, impl Iterator<Item = &'static str>)>, String> {
-    Ok(CATEGORIES_AVAILABLE
+pub(crate) fn emojis() -> impl Iterator<Item = (&'static str, impl Iterator<Item = &'static str>)> {
+    CATEGORIES_AVAILABLE
         .split("\0")
-        .zip(EMOJIS_AVAILABLE.split("\0\0").map(|l| l.split("\0"))))
+        .zip(EMOJIS_AVAILABLE.split("\0\0").map(|l| l.split("\0")))
 }

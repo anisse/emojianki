@@ -27,6 +27,18 @@ pub(crate) fn parse_labels(file_content: &str) -> impl Iterator<Item = (String, 
                 .into_iter()
         })
 }
+pub(crate) fn emojis_qualified_per_category() -> Vec<Vec<String>> {
+    let statuses = statuses();
+    parse_labels(LABELS)
+        .chunk_by(|(cat, _)| cat.clone())
+        .into_iter()
+        .map(|(_, emojis)| {
+            emojis
+                .filter_map(|(_, e)| qualified(&statuses, &e))
+                .collect()
+        })
+        .collect()
+}
 
 pub(crate) fn get_categories() -> Vec<String> {
     parse_labels(LABELS).map(|(cat, _)| cat).unique().collect()

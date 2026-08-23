@@ -153,15 +153,14 @@
           error.style.visibility = "hidden";
         }
 
-        const annot = await getData("cldr/annotations/" + langSelect.value + ".xml");
-        const annotDerived = await getData("cldr/annotationsDerived/" + langSelect.value + ".xml");
+        const annotations = await getData("data/" + langSelect.value + ".txt");
         const name = "EmojiAnki: " + langSelect.selectedOptions[0].innerText + " - " + checked.map((c) => c.value).join(", ");
         var filename = "EmojiAnki_" + langSelect.selectedOptions[0].innerText.replaceAll(" ", "-");
         if (checked.length == 1) {
           filename += "_" +  checked[0].value.replaceAll(" ", "-");
         }
         filename += ".apkg";
-        const out = ea.generate_set(name, annot, annotDerived,
+        const out = ea.generate_set(name, annotations,
                 checked.map((c) => c.name));
         downloadBlob(out, filename, 'application/octet-stream');
       }

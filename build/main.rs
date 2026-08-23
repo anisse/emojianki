@@ -11,11 +11,19 @@ use std::path::Path;
 
 use ldml::Ldml;
 
-use crate::categories::all_emojis_qualified;
+use crate::annotations::Annotations;
+use crate::annotations::parse_annotations;
+use crate::labels::all_emojis_qualified;
+use crate::labels::emojis_qualified_per_category;
+use crate::labels::get_categories;
 
+const ANNOT_DIR: &str = "cldr/common/annotations";
 const ANNOT_DERIVED_DIR: &str = "cldr/common/annotationsDerived";
-const MAIN_LANG_DIR: &str = "cldr/common/main/";
+const MAIN_LANG_DIR: &str = "cldr/common/main";
+const OUT_DIR: &str = "web/data";
 const UPPER: &str = "↑↑↑";
+const NO_DATA: &str = "\x18";
+const PARENT: &str = "\x1a";
 
 type Ldmls = HashMap<String, Ldml>; // Technically an OrderedMap would help to have a single
 // datastructure instead of the Vec + HashMap we use here
@@ -33,6 +41,7 @@ fn main() {
     );
     fs::write(&dest_path, available_languages_file_content(&langs, &ldmls))
         .expect("write available.rs");
+    create_annotations_files(&langs, &ldmls);
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed={}", ANNOT_DERIVED_DIR);
 }
@@ -46,7 +55,7 @@ fn available_languages_file_content(langs: &[String], ldmls: &Ldmls) -> String {
     );
     file_content += &format!(
         "pub(crate) static CATEGORIES_AVAILABLE: &str = \"{}\";\n",
-        categories::get_categories()
+        get_categories()
             .into_iter()
             .map(|s| format!("{s}\0"))
             .collect::<String>()
@@ -147,7 +156,7 @@ fn single_locale_translation<'a>(
                 if parent == "root" && parent_translation == UPPER {
                     locale_format(baselang, lang, ldmls, wd).into_string()
                 } else {
-                    "\x1a".to_string()
+                    PARENT.to_string()
                 }
             } else {
                 // Use locale pattern ??
@@ -165,8 +174,8 @@ enum LocaleTranslation {
 impl LocaleTranslation {
     fn into_string(self) -> String {
         match self {
-            LocaleTranslation::None => "\x18".to_string(),
-            LocaleTranslation::Parent => "\x1a".to_string(),
+            LocaleTranslation::None => NO_DATA.to_string(),
+            LocaleTranslation::Parent => PARENT.to_string(),
             LocaleTranslation::Some(s) => s,
         }
     }
@@ -353,7 +362,7 @@ fn value_or_root<'a, 'b>(
 //  - if a character label has no translation panic
 //  - two \0\0 separate languages
 fn all_categories_translations(ldmls: &Ldmls, langs: &[String]) -> String {
-    let categories = categories::get_categories();
+    let categories = get_categories();
     let mut out = String::new();
     let lower_labels: Vec<String> = categories
         .iter()
@@ -381,4 +390,62 @@ fn all_categories_translations(ldmls: &Ldmls, langs: &[String]) -> String {
         out += "\0";
     }
     out
+}
+
+fn create_annotations_files(langs: &[String], ldmls: &Ldmls) {
+    let mut annotations = HashMap::new();
+    for lang in langs.iter() {
+        let annot = fs::read_to_string(format!("{ANNOT_DIR}/{lang}.xml")).expect("annot");
+        let annot_derived =
+            fs::read_to_string(format!("{ANNOT_DERIVED_DIR}/{lang}.xml")).expect("annot_derived");
+        let mut annot_lang = parse_annotations(&annot);
+        annot_lang.extend(parse_annotations(&annot_derived));
+        //println!("cargo::warning=Annotations for {lang} : {annot_lang:?}");
+        annotations.insert(lang, annot_lang);
+    }
+    for lang in langs.iter() {
+        let out_filename = format!("{OUT_DIR}/{lang}.txt");
+        let content = emojis_qualified_per_category()
+            .into_iter()
+            .map(|l| {
+                l.into_iter()
+                    .map(|emoji| {
+                        let annot = annotation_get(&annotations[lang], &emoji);
+                        let annot = match annot.map(String::as_str) {
+                            None|Some(UPPER) => annotation_get(&annotations[&ldmls[lang].identity.language], &emoji), //parent
+                            Some(_) => annot,
+                        };
+                        annot.cloned()
+                        .unwrap_or_else(|| {
+                            println!(
+                                "cargo::warning=Emoji {{{emoji}}} {:x?} has no annotation in {lang}",
+                                emoji.chars().map(|c| c as u32).collect::<Vec<_>>(),
+                            );
+                            NO_DATA.to_string()
+                        })
+
+                    })
+                    .map(|e| format!("{e}\0"))
+                    .collect::<String>()
+            })
+            .map(|cat| format!("{cat}\0"))
+            .collect::<String>();
+        fs::write(&out_filename, content)
+            .unwrap_or_else(|e| panic!("Writing {out_filename} failed: {e}"));
+    }
+}
+fn annotation_get<'a>(annotations: &'a Annotations, emoji: &String) -> Option<&'a String> {
+    annotations.get(emoji).or_else(|| {
+        /* Match without variant selectors in case the annotation is without it
+         */
+        // TODO: check if this still necessary now that we qualify emojis ?
+        annotations.get(
+            &emoji
+                .chars()
+                // This character is a variant selector (color emoji vs text) and is
+                // not removed by classic unicode normalization
+                .filter(|c| *c != '\u{FE0F}')
+                .collect::<String>(),
+        )
+    })
 }

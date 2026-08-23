@@ -33,8 +33,6 @@ jobs:
         uses: actions/configure-pages@v5
       - name: install wasm-pack dep
         run: cargo install wasm-pack
-      - name: export web resources
-        run: ./build.sh
       - name: build
         run: wasm-pack build --target web --out-dir web --release --no-typescript --no-pack
       - name: Upload artifact
