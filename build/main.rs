@@ -13,14 +13,16 @@ use itertools::Itertools;
 use ldml::Ldml;
 
 use crate::annotations::Annotations;
-use crate::annotations::parse_annotations;
+use crate::annotations::LangAnnotations;
+use crate::annotations::load_annotations;
 use crate::labels::all_emojis_qualified;
 use crate::labels::emojis_qualified_per_category;
 use crate::labels::get_categories;
 
-const ANNOT_DIR: &str = "cldr/common/annotations";
-const ANNOT_DERIVED_DIR: &str = "cldr/common/annotationsDerived";
 const MAIN_LANG_DIR: &str = "cldr/common/main";
+pub(crate) const ANNOT_DIR: &str = "cldr/common/annotations";
+pub(crate) const ANNOT_DERIVED_DIR: &str = "cldr/common/annotationsDerived";
+
 const OUT_DIR: &str = "web/data";
 const UPPER: &str = "↑↑↑";
 const NO_DATA: &str = "\x18";
@@ -40,9 +42,10 @@ fn main() {
             .binary_search(&"root".to_string())
             .expect("root to be present"),
     );
+    let annotations = load_annotations(&langs);
     fs::write(&dest_path, available_languages_file_content(&langs, &ldmls))
         .expect("write available.rs");
-    create_annotations_files(&langs, &ldmls);
+    create_annotations_files(&langs, &ldmls, &annotations);
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed={}", ANNOT_DERIVED_DIR);
 }
@@ -401,17 +404,7 @@ fn all_categories_translations(ldmls: &Ldmls, langs: &[String]) -> String {
     out
 }
 
-fn create_annotations_files(langs: &[String], ldmls: &Ldmls) {
-    let mut annotations = HashMap::new();
-    for lang in langs.iter() {
-        let annot = fs::read_to_string(format!("{ANNOT_DIR}/{lang}.xml")).expect("annot");
-        let annot_derived =
-            fs::read_to_string(format!("{ANNOT_DERIVED_DIR}/{lang}.xml")).expect("annot_derived");
-        let mut annot_lang = parse_annotations(&annot);
-        annot_lang.extend(parse_annotations(&annot_derived));
-        //println!("cargo::warning=Annotations for {lang} : {annot_lang:?}");
-        annotations.insert(lang, annot_lang);
-    }
+fn create_annotations_files(langs: &[String], ldmls: &Ldmls, annotations: &Annotations) {
     let mut warn = Warning {
         name: "emojis",
         ..Default::default()
@@ -446,7 +439,7 @@ fn create_annotations_files(langs: &[String], ldmls: &Ldmls) {
     }
     warn.render();
 }
-fn annotation_get<'a>(annotations: &'a Annotations, emoji: &String) -> Option<&'a String> {
+fn annotation_get<'a>(annotations: &'a LangAnnotations, emoji: &String) -> Option<&'a String> {
     annotations.get(emoji).or_else(|| {
         /* Match without variant selectors in case the annotation is without it
          */
