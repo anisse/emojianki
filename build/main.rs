@@ -43,12 +43,36 @@ fn main() {
             .expect("root to be present"),
     );
     let annotations = load_annotations(&langs);
+    let langs = filter_langs(&langs, &annotations);
     fs::write(&dest_path, available_languages_file_content(&langs, &ldmls))
         .expect("write available.rs");
     create_annotations_files(&langs, &ldmls, &annotations);
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed={}", ANNOT_DERIVED_DIR);
 }
+// Only keep languages that have some amount of emoji annotations in each category
+// The goal is to filter-out "serious" languages. If the territory-specific variant it only needs
+// to customize one or two emoji, we probably don't want to expose it in emoji anki
+// Note how the current value is quite low (10 emojis per category), yet it manages to filter out
+// 58 languages out of 168.
+fn filter_langs(langs: &[String], annotations: &Annotations) -> Vec<String> {
+    let emojis = emojis_qualified_per_category();
+    langs
+        .iter()
+        .filter(|l| {
+            emojis.iter().all(|cat| {
+                cat.iter()
+                    .filter_map(|emoji| annotation_get(&annotations[l], emoji))
+                    .filter(|annot| *annot != UPPER)
+                    .count()
+                    > 10 // abritrary value of minimum 10 emojis per category *specific* to this
+                // language or sub-language
+            })
+        })
+        .cloned()
+        .collect()
+}
+
 fn available_languages_file_content(langs: &[String], ldmls: &Ldmls) -> String {
     let mut file_content = "pub(crate) static LANGUAGES_AVAILABLE: &str = \"".to_string();
     file_content += &langs.iter().map(|s| format!("{s}\0")).collect::<String>();
