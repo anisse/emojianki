@@ -8,7 +8,7 @@ Select a language, select one ore more Emoji categories, and download the Anki d
 
 The emoji data, the language and category names in various languages, all come from the [Unicode Common Locale Data Repository](https://github.com/unicode-org/cldr). It is built in Rust, on top of [genanki-wasm](https://github.com/viniciusdutra314/genanki-wasm/), as well as [quick-xml](https://docs.rs/quick-xml/latest/quick_xml/index.html) and [ICU](https://docs.rs/icu/latest/icu/) for parsing, and the various wasm-bindgen crates. The web UI uses [MVP.css](https://andybrewer.github.io/mvp/) and a [catppuccin](https://catppuccin.com/) color theme.
 
-The website is fully static, with the code doing the parsing and Anki flashcards generation running from the browser. It's hosted on Github from this repository.
+The website is fully static, with the code doing the Anki flashcards generation running in the browser, and all the data is pre-parsed, embedded in the website and fetched on demand. It's hosted on Github from this repository.
 
 # Contributing
 
@@ -18,5 +18,5 @@ The project does not accept unprompted contributions. Please open an issue befor
 
 It is still early, and there a few things that could be added or fixed.
 
- - Stop shipping the whole CLDR XML files, but pre-parse only the necessary parts.
  - A few more customization options
+ - Use CLDR capitalization metadata to capitalize languages appropriately (and maybe emojis annotations?).
