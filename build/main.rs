@@ -49,6 +49,47 @@ fn main() {
     create_annotations_files(&langs, &ldmls, &annotations);
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed={}", ANNOT_DERIVED_DIR);
+    //compare_labels_vs_statuses();
+}
+
+#[expect(dead_code)]
+fn compare_labels_vs_statuses() {
+    let emojis_from_labels: std::collections::HashSet<String> = emojis_qualified_per_category()
+        .into_iter()
+        .flatten()
+        .collect();
+    let emojis_from_status: std::collections::HashSet<String> = statuses::statuses()
+        .into_iter()
+        .filter(|(_, v)| *v == statuses::Status::FullyQualified)
+        .map(|(k, _)| k)
+        // For more visiblity, remove skin color variants and man/woman
+        .filter(|k| {
+            !k.chars().any(|c| {
+                "\u{1F3FB}\u{1F3FC}\u{1F3FD}\u{1F3FE}\u{1F3FF}".contains(c)
+                    || "\u{1F469}\u{1F468}\u{1F3FD}".contains(c)
+            })
+        })
+        //// For more visiblity, remove any Zero Width Joiner (ZWJ) sequence
+        //.filter(|k| !k.chars().any(|c| '\u{200D}' == c))
+        .collect();
+    println!(
+        "cargo::warning=Emojis in labels only: {:?}",
+        &emojis_from_labels - &emojis_from_status
+    );
+    println!(
+        "cargo::warning=Emojis in labels only (extra): {:?}",
+        (&emojis_from_labels - &emojis_from_status)
+            .iter()
+            .sorted()
+            .collect::<Vec<_>>()
+    );
+    println!(
+        "cargo::warning=Emojis in labels only (missing): {:?}",
+        (&emojis_from_status - &emojis_from_labels)
+            .iter()
+            .sorted()
+            .collect::<Vec<_>>()
+    );
 }
 // Only keep languages that have some amount of emoji annotations in each category
 // The goal is to filter-out "serious" languages. If the territory-specific variant it only needs
